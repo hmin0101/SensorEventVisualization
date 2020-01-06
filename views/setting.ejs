@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>MultiScreen</title>
+
+    <link rel="stylesheet" href="/stylesheets/bootstrap.min.css">
+    <link rel="stylesheet" href="/font-awesome/css/font-awesome.css">
+
+    <link rel="stylesheet" href="/stylesheets/animate.css">
+    <link rel="stylesheet" href="/stylesheets/style.css">
+
+    <link rel="stylesheet" href="/stylesheets/toastr-2.1.3.min.css">
+
+    <style>
+        .flex {
+            display: flex;
+        }
+        .flex-item-20 {
+            flex: 20%;
+            max-width: 20%;
+        }
+        .flex-item-25 {
+            flex: 25%;
+            max-width: 25%;
+        }
+        .flex-item-50 {
+            flex: 50%;
+            max-width: 50%;
+        }
+        .flex-item-75 {
+            flex: 75%;
+            max-width: 75%;
+        }
+
+        .subTitle {
+            display: block;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+
+<body>
+<div id="wrapper">
+
+    <nav class="navbar-default navbar-static-side" role="navigation">
+        <div class="sidebar-collapse">
+            <ul class="nav metismenu" id="side-menu">
+                <li class="nav-header">
+                    <div class="profile-element">
+                        <a href="/">
+                            <span class="block font-bold" style="font-size: 24px">KAIST</span>
+                            <span class="text-muted text-xs block">&copy copyright 2019</span>
+                        </a>
+                    </div>
+                    <div class="logo-element">KI</div>
+                </li>
+                <li>
+                    <a href="/"><i class="fa fa-th-large"></i> <span class="nav-label">센서별/시간대</span><span class="fa arrow"></span></a>
+                    <ul class="nav nav-second-level collapse">
+                        <li><a href="/m1">매대1</a></li>
+                        <li><a href="/m2">매대2</a></li>
+                        <li><a href="/m3">매대3</a></li>
+                        <li><a href="/m4">매대4</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="/boxplot"><i class="fa fa-group"></i> <span class="nav-label">사용자 감지시간</span></a>
+                </li>
+                <li>
+                    <a href="/advertise"><i class="fa fa-cloud"></i> <span class="nav-label">광고표출</span></a>
+
+                </li>
+                <li>
+                    <a href="/punch"><i class="fa fa-cloud"></i> <span class="nav-label">매대별 비교</span></a>
+                </li>
+                <li class="active">
+                    <a href="/setting"><i class="fa fa-cog"></i> <span class="nav-label">광고 설정</span></a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div id="page-wrapper" class="gray-bg">
+        <div class="row border-bottom">
+            <nav class="navbar navbar-static-top white-bg" role="navigation" style="margin-bottom: 0">
+                <div class="navbar-header navbar-top-left">
+                    <a class="navbar-minimalize minimalize-styl-2 btn btn-primary " href="#"><i class="fa fa-bars"></i> </a>
+                </div>
+                <ul class="nav navbar-top-links navbar-top-right">
+                    <li>
+                        <span class="m-r-sm text-muted welcome-message">Welcome to Multiscreen Management Site.</span>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+        <div class="wrapper wrapper-content">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="row">
+                        <div class="col-lg-10">
+                            <div class="ibox">
+                                <div class="ibox-title">
+                                    <h5>광고 설정</h5>
+                                    <div class="ibox-tools">
+                                        <a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                                    </div>
+                                </div>
+                                <div class="ibox-content">
+                                    <div class="form-group flex">
+                                        <div class="flex-item-50 flex m-r-xs">
+                                            <div class="flex-item-50 m-r-xs">
+                                                <small class="subTitle">Sensor</small>
+                                                <select class="form-control" id="select-sensor">
+                                                    <% sensorList.forEach(function(elem) { %>
+                                                        <option value="<%= elem.sensorsId %>"><%= elem.name %></option>
+                                                    <% }); %>
+                                                </select>
+                                            </div>
+                                            <div class="flex-item-50 m-l-xs">
+                                                <small class="subTitle">key</small>
+                                                <input class="form-control" placeholder="input key" id="input-key">
+                                            </div>
+                                        </div>
+                                        <div class="flex-item-50 m-l-xs">
+                                            <small class="subTitle">Advertisement Url</small>
+                                            <input class="form-control" placeholder="Input advertisement url" id="input-url">
+                                        </div>
+                                    </div>
+                                    <div class="hr-line-dashed"></div>
+                                    <div class="form-group flex">
+                                        <div class="flex-item-20 m-r-xs">
+                                            <small class="subTitle">X axis</small>
+                                            <input class="form-control" placeholder="input X axis" id="input-xAxis">
+                                        </div>
+                                        <div class="flex-item-20 m-l-xs m-r-xs">
+                                            <small class="subTitle">Y axis</small>
+                                            <input class="form-control" placeholder="input Y axis" id="input-yAxis">
+                                        </div>
+                                        <div class="flex-item-20 m-l-xs m-r-xs">
+                                            <small class="subTitle">Width</small>
+                                            <input class="form-control" placeholder="input width" id="input-width">
+                                        </div>
+                                        <div class="flex-item-20 m-l-xs m-r-xs">
+                                            <small class="subTitle">Height</small>
+                                            <input class="form-control" placeholder="input height" id="input-height">
+                                        </div>
+                                        <div class="flex-item-20 m-l-xs">
+                                            <small class="subTitle">Duration</small>
+                                            <input class="form-control" placeholder="input Duration" id="input-duration">
+                                        </div>
+                                    </div>
+                                    <div class="hr-line-dashed"></div>
+                                    <div class="form-group m-b-none arrange-right">
+                                        <button class="btn btn-white btn-w-m" id="btn-setting">설정</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-2">
+                            <div class="ibox-title">
+                                <h5>광고 테스트</h5>
+                            </div>
+                            <div class="ibox-content">
+                                <div class="form-group">
+                                    <small class="subTitle">Sensor</small>
+                                    <select class="form-control" id="select-sensor-using-send">
+                                        <% sensorList.forEach(function(elem) { %>
+                                            <option value="<%= elem.sensorsId %>"><%= elem.name %></option>
+                                        <% }); %>
+                                    </select>
+                                </div>
+                                <div class="hr-line-dashed"></div>
+                                <div class="form-group">
+                                    <small class="subTitle">Sensor</small>
+                                    <select class="form-control" id="select-advertisement">
+                                        <% if (advertisementSettingList.length > 0) { %>
+                                            <% advertisementSettingList.forEach(function(elem) { %>
+                                                <option value="<%= elem.advertisementSettingId %>"><%= elem.key %></option>
+                                            <% }); %>
+                                        <% } else { %>
+                                            <option value="-1">저장된 광고가 없습니다.</option>
+                                        <% } %>
+                                    </select>
+                                </div>
+                                <div class="hr-line-dashed"></div>
+                                <div class="form-group m-b-none">
+                                    <button class="btn btn-primary" id="btn-send" style="width: 100%;">Test</button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Mainly scripts -->
+<script src="/javascripts/jquery-3.1.1.min.js"></script>
+<script src="/javascripts/bootstrap.js"></script>
+<script src="/javascripts/jquery.metisMenu.js"></script>
+<script src="/javascripts/jquery.slimscroll.min.js"></script>
+
+<!-- Custom and plugin javascript -->
+<script src="/javascripts/inspinia.js"></script>
+<script src="/javascripts/pace.min.js"></script>
+
+<!-- Toastr -->
+<script src="/javascripts/toastr-2.1.3.min.js"></script>
+
+<!-- Public Function -->
+<script src="/javascripts/public-function.js"></script>
+
+<!-- jQuery UI -->
+<script src="/javascripts/jquery-ui.min.js"></script>
+
+<script>
+    $(document).ready(() => {
+
+        let sensorId = $('#select-sensor-using-send option:selected').val();
+        let settingId = $('#select-advertisement option:selected').val();
+
+        // 광고 설정
+        $('#btn-setting').on('click', function(e) {
+            console.log("?");
+            const settingInfo = {
+                sensorId: $('#select-sensor option:selected').val(),
+                key: $('#input-key').val(),
+                url: $('#input-url').val(),
+                xAxis: $('#input-xAxis').val(),
+                yAxis: $('#input-yAxis').val(),
+                width: $('#input-width').val(),
+                height: $('#input-height').val(),
+                duration: $('#input-duration').val(),
+            };
+            console.log(settingInfo);
+            if (blankCheck(settingInfo.key)) {
+                createToast('warning', "광고 구분을 위한 Key를 입력해주세요");
+                $('#input-key').focus();
+            } else if (blankCheck(settingInfo.url)) {
+                createToast('warning', "URL을 입력해주세요");
+                $('#input-url').focus();
+            } else if (blankCheck(settingInfo.width)) {
+                createToast('warning', "너비를 입력해주세요.");
+                $('#input-width').focus();
+            } else if (blankCheck(settingInfo.height)) {
+                createToast('warning', "높이 입력해주세요.");
+                $('#input-height').focus();
+            } else if (blankCheck(settingInfo.duration)) {
+                createToast('warning', "광고 시간을 입력해주세요.");
+                $('#input-duration').focus();
+            } else {
+                if (blankCheck(settingInfo.xAxis)) {
+                    settingInfo.xAxis = 0;
+                }
+                if (blankCheck(settingInfo.yAxis)) {
+                    settingInfo.yAxis = 0;
+                }
+
+                $.ajax({
+                    type: "POST",
+                    url: "/setting",
+                    data: "info="+JSON.stringify(settingInfo),
+                    success: function(result) {
+                        if (result.result) {
+                            createToast('success', result.message);
+
+                            $('#select-sensor option:eq(0)').prop('selected', true);
+                            $('#input-key').val('');
+                            $('#input-url').val('');
+                            $('#input-xAxis').val('');
+                            $('#input-yAxis').val('');
+                            $('#input-width').val('');
+                            $('#input-height').val('');
+                            $('#input-duration').val('');
+
+                            window.location.reload();
+                        } else {
+                            createToast('error', result.message);
+                        }
+                    }
+                });
+            }
+
+        });
+
+        // 광고 이벤트
+        $('#btn-send').on('click', function(e) {
+            settingId = $('#select-advertisement option:selected').val();
+
+            if (sensorId === -1) {
+
+            } else if (settingId === -1) {
+                createToast('warning', "선택된 광고 설정이 없습니다.");
+            } else {
+
+                $.ajax({
+                    type: "GET",
+                    url: "/popup/info/"+settingId,
+                    success: function(result) {
+                        if (result.result) {
+                            // const info = result.info;
+                            const id = result.settingId;
+                            // console.log(id);
+
+                            $.ajax({
+                                type: "POST",
+                                url: "http://13.209.63.0:9000/setting",
+                                data: "settingId="+id,
+                                // success: function(result) {
+                                //     console.log(result);
+                                // }
+                            });
+                        } else {
+                            createToast('waning', result.message);
+                        }
+                    },
+
+                });
+
+
+                // $.ajax({
+                //     type: "POST",
+                //     url: "http://13.209.63.9000/setting",
+                //     data: "settingId="+settingId,
+                //     success: function(result) {
+                //         console.log(result);
+                //     }
+                // });
+
+            }
+
+        });
+
+        $('#select-sensor-using-send').on('change', function() {
+            const sensorId = $(this).val();
+
+            $.get('/setting/'+sensorId, function(list) {
+                $('#select-advertisement option').remove();
+
+                list.forEach(function(elem) {
+                    $('#select-advertisement').append('<option value="'+elem.advertisementSettingId+'">'+elem.key+'</option>');
+                });
+            });
+
+        });
+
+        $('#select-advertisement').on('change', function() {
+            const advertisementSettingId = $(this).val();
+            // console.log(advertisementSettingId);
+            // $.get('/setting/'+sensorId, function(list) {
+            //     $('#select-sensor-using-send option').remove();
+            //
+            //     settingList = list;
+            //
+            //     list.forEach(function(elem) {
+            //         $('#select-sensor-using-send').append('<option value="'+elem.advertisementSettingId+'">'+elem.key+'"</option>');
+            //     });
+            // });
+
+        });
+
+    });
+</script>
+</body>
+</html>

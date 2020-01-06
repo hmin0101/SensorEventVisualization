@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>MultiScreen</title>
+
+    <link rel="stylesheet" href="/stylesheets/bootstrap.min.css">
+    <link rel="stylesheet" href="/font-awesome/css/font-awesome.css">
+
+    <link rel="stylesheet" href="/stylesheets/animate.css">
+    <link rel="stylesheet" href="/stylesheets/style.css">
+
+    <style>
+        .device-box {
+            margin: 10px 0;
+            background-color: #ffffff;
+            color: inherit;
+            padding: 20px;
+            border: 1px solid #e7eaec;
+            box-shadow: 0 2px 4px rgba(133, 133, 133, 0.25), 0 2px 3px rgba(133, 133, 133, 0.18);
+            text-align: center;
+        }
+
+        .device-state {
+            position: absolute;
+            top: 25px;
+            right: 35px;
+            user-select: none;
+        }
+
+        .device-img {
+            width: 108px;
+            height: 108px;
+            margin: 10px 0 15px 0;
+        }
+
+        .device-info p {
+            margin: 5px;
+        }
+
+        .device-info p:last-child {
+            margin: 5px 0 0 0;
+        }
+
+        /* Detail Modal */
+        .modal-header {
+            padding: 30px 15px 20px 15px !important;
+        }
+        .content-item {
+            margin: 5px;
+            padding: 15px;
+            border: 1px solid #e7eaec;
+            cursor: pointer;
+
+        }
+        .item-type-img {
+            width: 60px;
+            height: 60px;
+            margin: 5px 0 8px 0;
+        }
+        .item-name {
+            word-break: break-all;
+        }
+    </style>
+</head>
+
+<body>
+<div id="wrapper">
+
+    <% include ./nav %>
+
+
+    <div id="page-wrapper" class="gray-bg">
+        <div class="row border-bottom">
+            <nav class="navbar navbar-static-top white-bg" role="navigation" style="margin-bottom: 0">
+                <div class="navbar-header navbar-top-left">
+                    <a class="navbar-minimalize minimalize-styl-2 btn btn-primary " href="#"><i class="fa fa-bars"></i> </a>
+                </div>
+                <ul class="nav navbar-top-links navbar-top-right">
+                    <li>
+                        <span class="m-r-sm text-muted welcome-message">Welcome to Multiscreen Management Site.</span>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+        <div class="wrapper wrapper-content">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="ibox">
+                        <div class="ibox-title">
+                            <h5>통계 그래프</h5>
+                            <div class="ibox-tools">
+                                <a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                            </div>
+                        </div>
+                        <div class="ibox-content" style="padding-top: 10px; padding-bottom: 10px">
+                            <div class="row" id="connect-device-list">
+                                <div id="chart" style="width: 100%; height: 400px"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+</div>
+
+<!-- Mainly scripts -->
+<script src="/javascripts/jquery-3.1.1.min.js"></script>
+<script src="/javascripts/bootstrap.js"></script>
+<script src="/javascripts/jquery.metisMenu.js"></script>
+<script src="/javascripts/jquery.slimscroll.min.js"></script>
+
+<!-- Custom and plugin javascript -->
+<script src="/javascripts/inspinia.js"></script>
+<script src="/javascripts/pace.min.js"></script>
+
+<!-- echarts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/4.2.1/echarts.js"></script>
+
+<!-- jQuery UI -->
+<script src="/javascripts/jquery-ui.min.js"></script>
+
+<script>
+    $(document).ready(() => {
+
+        const userDetectionSerial = JSON.parse('<%- userDetectionSerial %>');       // 사용자 감지 이벤트 데이터 (echart 에서 사용할 수 있도록 가공된 데이터)
+        const objectPickupSerial = JSON.parse('<%- objectPickupSerial %>');         // 물건 픽업 이벤트 데이터 (echart 에서 사용할 수 있도록 가공된 데이터)
+
+        const option = {            // echart 생성을 위한 Option 설정
+            title: {
+                text: '매대 4'
+            },
+            tooltip: {
+                trigger: 'axis'
+            },
+            legend: {
+                data:['사용자 감지','물건 픽업']
+            },
+            grid: {
+                left: '3%',
+                right: '4%',
+                bottom: '3%',
+                containLabel: true
+            },
+            toolbox: {
+                feature: {
+                    saveAsImage: {}
+                }
+            },
+            xAxis: {
+                type: 'category',
+                boundaryGap: false,
+                data: ['0 Hour','1 Hour','2 Hour','3 Hour','4 Hour','5 Hour','6 Hour','7 Hour','8 Hour','9 Hour','10 Hour','11 Hour','12 Hour','13 Hour',
+                    '14 Hour','15 Hour','16 Hour','17 Hour','18 Hour','19 Hour','20 Hour','21 Hour','22 Hour','23 Hour','24 Hour']
+            },
+            yAxis: {
+                type: 'value'
+            },
+            series: [
+                {
+                    name:'사용자 감지',
+                    type:'line',
+                    data: userDetectionSerial,
+                },
+                {
+                    name:'물건 픽업',
+                    type:'line',
+                    data: objectPickupSerial,
+                }
+            ]
+        };
+
+        const chart = echarts.init(document.getElementById('chart'));       // echart 초기화
+        chart.setOption(option);                                            // option을 추가하여 생성
+
+    })
+</script>
+</body>
+</html>

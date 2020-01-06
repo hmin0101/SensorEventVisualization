@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>MultiScreen</title>
+
+  <link rel="stylesheet" href="/stylesheets/bootstrap.min.css">
+  <link rel="stylesheet" href="/font-awesome/css/font-awesome.css">
+
+  <link rel="stylesheet" href="/stylesheets/animate.css">
+  <link rel="stylesheet" href="/stylesheets/style.css">
+
+  <style>
+    .device-box {
+      margin: 10px 0;
+      background-color: #ffffff;
+      color: inherit;
+      padding: 20px;
+      border: 1px solid #e7eaec;
+      box-shadow: 0 2px 4px rgba(133, 133, 133, 0.25), 0 2px 3px rgba(133, 133, 133, 0.18);
+      text-align: center;
+    }
+
+    .device-state {
+      position: absolute;
+      top: 25px;
+      right: 35px;
+      user-select: none;
+    }
+
+    .device-img {
+      width: 108px;
+      height: 108px;
+      margin: 10px 0 15px 0;
+    }
+
+    .device-info p {
+      margin: 5px;
+    }
+
+    .device-info p:last-child {
+      margin: 5px 0 0 0;
+    }
+
+    /* Detail Modal */
+    .modal-header {
+      padding: 30px 15px 20px 15px !important;
+    }
+    .content-item {
+      margin: 5px;
+      padding: 15px;
+      border: 1px solid #e7eaec;
+      cursor: pointer;
+
+    }
+    .item-type-img {
+      width: 60px;
+      height: 60px;
+      margin: 5px 0 8px 0;
+    }
+    .item-name {
+      word-break: break-all;
+    }
+  </style>
+</head>
+
+<body>
+<div id="wrapper">
+
+  <nav class="navbar-default navbar-static-side" role="navigation">
+    <div class="sidebar-collapse">
+      <ul class="nav metismenu" id="side-menu">
+        <li class="nav-header">
+          <div class="profile-element">
+            <a href="/">
+              <span class="block font-bold" style="font-size: 24px">KAIST</span>
+              <span class="text-muted text-xs block">&copy copyright 2019</span>
+            </a>
+          </div>
+          <div class="logo-element">KI</div>
+        </li>
+        <li class="active">
+          <a href="/"><i class="fa fa-th-large"></i> <span class="nav-label">센서별/시간대</span><span class="fa arrow"></span></a>
+          <ul class="nav nav-second-level collapse">
+            <li><a href="/m1">매대1</a></li>
+            <li><a href="/m2">매대2</a></li>
+            <li><a href="/m3">매대3</a></li>
+            <li><a href="/m4">매대4</a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="/boxplot"><i class="fa fa-group"></i> <span class="nav-label">사용자 감지시간</span></a>
+        </li>
+        <li>
+          <a href="/advertise"><i class="fa fa-cloud"></i> <span class="nav-label">광고표출</span></a>
+
+        </li>
+        <li>
+          <a href="/punch"><i class="fa fa-cloud"></i> <span class="nav-label">매대별 비교</span></a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+
+  <div id="page-wrapper" class="gray-bg">
+    <div class="row border-bottom">
+      <nav class="navbar navbar-static-top white-bg" role="navigation" style="margin-bottom: 0">
+        <div class="navbar-header navbar-top-left">
+          <a class="navbar-minimalize minimalize-styl-2 btn btn-primary " href="#"><i class="fa fa-bars"></i> </a>
+        </div>
+        <ul class="nav navbar-top-links navbar-top-right">
+          <li>
+            <span class="m-r-sm text-muted welcome-message">Welcome to Multiscreen Management Site.</span>
+          </li>
+        </ul>
+      </nav>
+    </div>
+
+    <div class="wrapper wrapper-content">
+      <div class="row">
+        <div class="col-lg-12">
+          <div class="ibox">
+            <div class="ibox-title">
+              <h5>통계 그래프</h5>
+              <div class="ibox-tools">
+                <a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+              </div>
+            </div>
+            <div class="ibox-content" style="padding-top: 10px; padding-bottom: 10px">
+              <div class="row" id="connect-device-list">
+                <div id="chart" style="width: 100%; height: 400px"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+       <!-- <div class="col-lg-12">
+          <div class="ibox">
+            <div class="ibox-title">
+              <h5>Disconnected Device</h5>
+              <div class="ibox-tools">
+                <a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+              </div>
+            </div>
+            <div class="ibox-content" style="padding-top: 10px; padding-bottom: 10px">
+              <div class="row" id="disconnect-device-list"></div>
+              <div class="text-center" id="no-result-disconn" style="margin: 15px 0; user-select: none;">
+                <img src="/images/ic_warning.svg" style="width: 100px;">
+                <p style="margin: 12px 0 0 0; font-size: 16px;">Result Not Found</p>
+              </div>
+            </div>
+          </div>
+        </div>-->
+      </div>
+
+
+    </div>
+  </div>
+</div>
+
+<!-- Mainly scripts -->
+<script src="/javascripts/jquery-3.1.1.min.js"></script>
+<script src="/javascripts/bootstrap.js"></script>
+<script src="/javascripts/jquery.metisMenu.js"></script>
+<script src="/javascripts/jquery.slimscroll.min.js"></script>
+
+<!-- Custom and plugin javascript -->
+<script src="/javascripts/inspinia.js"></script>
+<script src="/javascripts/pace.min.js"></script>
+
+<!-- echarts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/4.2.1/echarts.js"></script>
+
+<!-- jQuery UI -->
+<script src="/javascripts/jquery-ui.min.js"></script>
+
+<script>
+  $(document).ready(() => {
+
+    const option = {
+      title: {
+        text: '매대 1'
+      },
+      tooltip: {
+        trigger: 'axis'
+      },
+      legend: {
+        data:['사용자 감지','물건 픽업']
+      },
+      grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '3%',
+        containLabel: true
+      },
+      toolbox: {
+        feature: {
+          saveAsImage: {}
+        }
+      },
+      xAxis: {
+        type: 'category',
+        boundaryGap: false,
+        data: ['0 Hour','1 Hour','2 Hour','3 Hour','4 Hour','5 Hour','6 Hour','7 Hour','8 Hour','9 Hour','10 Hour','11 Hour','12 Hour','13 Hour',
+          '14 Hour','15 Hour','16 Hour','17 Hour','18 Hour','19 Hour','20 Hour','21 Hour','22 Hour','23 Hour','24 Hour']
+      },
+      yAxis: {
+        type: 'value'
+      },
+      series: [
+        {
+          name:'사용자 감지',
+          type:'line',
+          stack: '总量',
+          data:[8, 6, 8, 24, 40, 42, 12, 32, 22, 36, 15, 22, 30, 12, 52, 23, 10, 8, 16, 10, 7, 5, 3, 8, 0]
+        },
+        {
+          name:'물건 픽업',
+          type:'line',
+          stack: '总量',
+          data:[5, 3, 4, 12, 23, 21, 25, 17, 11, 18, 25, 29, 40, 32, 32, 23, 30, 3, 8, 7, 15, 11, 0, 4, 8]
+        }
+      ]
+    };
+
+    const chart = echarts.init(document.getElementById('chart'));
+    chart.setOption(option);
+
+  })
+</script>
+</body>
+</html>
