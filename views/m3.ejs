@@ -82,6 +82,22 @@
                     <li>
                         <span class="m-r-sm text-muted welcome-message">Welcome to Multiscreen Management Site.</span>
                     </li>
+                    <li>
+                        <div class="input-group">
+                            <select class="form-control-sm" id="select-device">
+                                <% const devices = deviceList; %>
+                                <% let index = 0; %>
+                                <% for (const device of deviceList) { %>
+                                    <% if (index === pos) { %>
+                                        <option value="<%= device.id %>" selected><%= device.name %></option>
+                                    <% } else { %>
+                                        <option value="<%= device.id %>"><%= device.name %></option>
+                                    <% } %>
+                                    <% index++; %>
+                                <% } %>
+                            </select>
+                        </div>
+                    </li>
                 </ul>
             </nav>
         </div>
@@ -180,6 +196,33 @@
 
         const chart = echarts.init(document.getElementById('chart'));       // echart 초기화
         chart.setOption(option);                                            // option을 추가하여 생성
+
+        // Select Device
+        $('#select-device').on("change", function(e) {
+            const deviceId = $(this).val();
+
+            $.ajax({
+                type: "POST",
+                url: "/choice/device",
+                data: "type=detect&id="+deviceId+"&sIndex=2",
+                success: function(result) {
+                    if (result) {
+                        option.series = [{
+                            name: "사용자 감지",
+                            type: "line",
+                            data: result.udOption
+                        }, {
+                            name: "물건 픽업",
+                            type: "line",
+                            data: result.opOption
+                        }];
+                        chart.setOption(option);
+                    } else {
+                        alert(result.message);
+                    }
+                }
+            });
+        });
 
     })
 </script>

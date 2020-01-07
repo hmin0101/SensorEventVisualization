@@ -5,17 +5,38 @@ const query = require('../model/query');
 
 const convert  = require('../public/javascripts/custom-convert');
 
-/* Get Sensor Info */
-let sensorList = [];
-(async function getSensorInfo() {
-    const result = await query.getSensorsInfo();                    // DB Sensor Table 에서 센서들에 대한 정보를 가져옴
+let CUR_POS = 0;
+
+/* 데이터베이스로부터 디바이스 목록과 각 디바이스에 연결된 센서들의 정보를 가져옴 */
+let deviceList = [];
+(async function getDeviceList() {
+    const result = await query.getDeviceList();
     if (result.result) {
-        sensorList = result.message.map(function(elem) {            // Sensor List 에 Sensor Info 저장
+        deviceList = result.message.map(function(elem) {
             return {
-                sensorsId: elem.sensors_id,
+                id: elem.device_id,
                 name: elem.name,
-            };
+                sensors: []
+            }
         });
+
+        // 각 디바이스별 센서 목록
+        const selectResult = await query.getSensorList();
+        if (selectResult.result) {
+            for (const sensor of selectResult.message) {
+                let idx = 0;
+                for (const device of deviceList) {
+                    if (device.id === sensor.device_id) {
+                        deviceList[idx].sensors.push({
+                            id: sensor.sensors_id,
+                            name: sensor.name
+                        });
+                        break;
+                    }
+                    idx++;
+                }
+            }
+        }
     }
 })();
 
@@ -24,62 +45,86 @@ router.get('/', function(req, res, next) {
   res.redirect('/m1');
 });
 
+/*
+ * 디바이스 선택에 따라서 디바이스에 연결된 센서들의 이벤트 데이터를 데이터베이스로부터 읽어와 그래프에 사용하기 위한 데이터로 변환
+ */
+router.post('/choice/device', async function(req, res) {
+    const type = req.body.type;
+    const deviceId = req.body.id;
+
+    let index = 0;
+    for (const device of deviceList) {
+        if (Number(deviceId) === Number(device.id))
+            CUR_POS = index;
+        index++;
+    }
+
+    switch (type) {
+        case "detect":
+            const sensorIndex = req.body.sIndex;
+            const udOption = await getUserDetectionInDisplayStand(deviceList[CUR_POS].sensors[sensorIndex].id);
+            const opOption = await getObjectPickupInDisplayStand(deviceList[CUR_POS].sensors[sensorIndex].id);
+            await res.json({result: true, udOption: udOption, opOption: opOption});
+            break;
+        case "stayTime":
+            const stayTime = await getUserStayTime(deviceList[CUR_POS].id);
+            await res.json({result: true, stayTime: stayTime});
+            break;
+        case "popup":
+            const adCount = await getAdvertisementCount(deviceList[CUR_POS].id);
+            await res.json({result: true, adCount: adCount});
+            break;
+        default:
+            await res.json({result: false, message: "Type Error"});
+            break;
+    }
+});
+
 /* Sensor1 의 Event Data 를 시각화하여 보여주는 Page */
 router.get('/m1', async function(req, res) {
-    const udOption = await getUserDetectionInDisplayStand(sensorList[0].sensorsId);         // Sensor 1 에 대한 사용자 감지 이벤트를 가져오고 Chart 에서 사용할 수 있도록 처리
-    const opOption = await getObjectPickupInDisplayStand(sensorList[0].sensorsId);          // Sensor 1 에 대한 물건 픽업 이벤트를 가져오고 Chart 에서 사용할 수 있도록 처리
-
-    res.render('m1', {userDetectionSerial: JSON.stringify(udOption), objectPickupSerial: JSON.stringify(opOption)});    // Sensor 1 에 각 이벤트 데이터를 파라미터로 넘겨줌 ( m1.ejs 를 표출 )
+    const udOption = await getUserDetectionInDisplayStand(deviceList[CUR_POS].sensors[0].id);         // Sensor 1 에 대한 사용자 감지 이벤트를 가져오고 Chart 에서 사용할 수 있도록 처리
+    const opOption = await getObjectPickupInDisplayStand(deviceList[CUR_POS].sensors[0].id);          // Sensor 1 에 대한 물건 픽업 이벤트를 가져오고 Chart 에서 사용할 수 있도록 처리
+    res.render('m1', {deviceList: deviceList, pos: CUR_POS, userDetectionSerial: JSON.stringify(udOption), objectPickupSerial: JSON.stringify(opOption)});    // Sensor 1 에 각 이벤트 데이터를 파라미터로 넘겨줌 ( m1.ejs 를 표출 )
 });
 
 /* Sensor2 의 Event Data 를 시각화하여 보여주는 Page */
 router.get('/m2', async function(req, res) {
-    const udOption = await getUserDetectionInDisplayStand(sensorList[1].sensorsId);         // Sensor 2 에 대한 사용자 감지 이벤트를 가져오고 Chart 에서 사용할 수 있도록 처리
-    const opOption = await getObjectPickupInDisplayStand(sensorList[1].sensorsId);          // Sensor 2 에 대한 물건 픽업 이벤트를 가져오고 Chart 에서 사용할 수 있도록 처리
-
-    res.render('m2', {userDetectionSerial: JSON.stringify(udOption), objectPickupSerial: JSON.stringify(opOption)});    // Sensor 2 에 각 이벤트 데이터를 파라미터로 넘겨줌 ( m2.ejs 를 표출 )
+    const udOption = await getUserDetectionInDisplayStand(deviceList[CUR_POS].sensors[1].id);         // Sensor 2 에 대한 사용자 감지 이벤트를 가져오고 Chart 에서 사용할 수 있도록 처리
+    const opOption = await getObjectPickupInDisplayStand(deviceList[CUR_POS].sensors[1].id);          // Sensor 2 에 대한 물건 픽업 이벤트를 가져오고 Chart 에서 사용할 수 있도록 처리
+    res.render('m2', {deviceList: deviceList, pos: CUR_POS, userDetectionSerial: JSON.stringify(udOption), objectPickupSerial: JSON.stringify(opOption)});    // Sensor 2 에 각 이벤트 데이터를 파라미터로 넘겨줌 ( m2.ejs 를 표출 )
 });
 
 /* Sensor3 의 Event Data 를 시각화하여 보여주는 Page */
 router.get('/m3', async function(req, res) {
-    const udOption = await getUserDetectionInDisplayStand(sensorList[2].sensorsId);         // Sensor 3 에 대한 사용자 감지 이벤트를 가져오고 Chart 에서 사용할 수 있도록 처리
-    const opOption = await getObjectPickupInDisplayStand(sensorList[2].sensorsId);          // Sensor 3 에 대한 물건 픽업 이벤트를 가져오고 Chart 에서 사용할 수 있도록 처리
-
-    res.render('m3', {userDetectionSerial: JSON.stringify(udOption), objectPickupSerial: JSON.stringify(opOption)});    // Sensor 3 에 각 이벤트 데이터를 파라미터로 넘겨줌 ( m3.ejs 를 표출 )
+    const udOption = await getUserDetectionInDisplayStand(deviceList[CUR_POS].sensors[2].id);         // Sensor 3 에 대한 사용자 감지 이벤트를 가져오고 Chart 에서 사용할 수 있도록 처리
+    const opOption = await getObjectPickupInDisplayStand(deviceList[CUR_POS].sensors[2].id);          // Sensor 3 에 대한 물건 픽업 이벤트를 가져오고 Chart 에서 사용할 수 있도록 처리
+    res.render('m3', {deviceList: deviceList, pos: CUR_POS, userDetectionSerial: JSON.stringify(udOption), objectPickupSerial: JSON.stringify(opOption)});    // Sensor 3 에 각 이벤트 데이터를 파라미터로 넘겨줌 ( m3.ejs 를 표출 )
 });
 
 /* Sensor4 의 Event Data 를 시각화하여 보여주는 Page */
 router.get('/m4', async function(req, res) {
-    const udOption = await getUserDetectionInDisplayStand(sensorList[3].sensorsId);         // Sensor 4 에 대한 사용자 감지 이벤트를 가져오고 Chart 에서 사용할 수 있도록 처리
-    const opOption = await getObjectPickupInDisplayStand(sensorList[3].sensorsId);          // Sensor 4 에 대한 물건 픽업 이벤트를 가져오고 Chart 에서 사용할 수 있도록 처리
-
-    res.render('m4', {userDetectionSerial: JSON.stringify(udOption), objectPickupSerial: JSON.stringify(opOption)});    // Sensor 4 에 각 이벤트 데이터를 파라미터로 넘겨줌 ( m4.ejs 를 표출 )
+    const udOption = await getUserDetectionInDisplayStand(deviceList[CUR_POS].sensors[3].id);         // Sensor 4 에 대한 사용자 감지 이벤트를 가져오고 Chart 에서 사용할 수 있도록 처리
+    const opOption = await getObjectPickupInDisplayStand(deviceList[CUR_POS].sensors[3].id);          // Sensor 4 에 대한 물건 픽업 이벤트를 가져오고 Chart 에서 사용할 수 있도록 처리
+    res.render('m4', {deviceList: deviceList, pos: CUR_POS, userDetectionSerial: JSON.stringify(udOption), objectPickupSerial: JSON.stringify(opOption)});    // Sensor 4 에 각 이벤트 데이터를 파라미터로 넘겨줌 ( m4.ejs 를 표출 )
 });
 
 /* 시간 대별 사용자 감지 이벤트의 지속시간을 시각화하여 보여주는 Page */
-router.get('/boxplot', async function(req, res) {
-    const result = await query.getDuration();           // 사용자가 센서 앞에서 얼마나 머물렀는지를 알 수 있는 Duration 값을 DB 에서 가져옴
-
-    if (result.result) {
-        const convertedData = await convert.hourlyAnalysis(result.message);             // Duration Data 를 시각화하기 위해 이벤트 발생 시간을 기준으로 데이터 가공
-        res.render('boxplot', {durationData: JSON.stringify(convertedData)});           // echart 에서 사용할 가공한 데이터를 파라미터로 넘겨줌 ( boxplot.ejs 를 표출)
-    } else {
-        res.render('boxplot', {durationData: []});                                      // Query Error 일 경우, 빈 데이터를 넘겨줌 ( boxplot.ejs 를 표출)
-    }
+router.get('/stayTime', async function(req, res) {
+    const stayTime = await getUserStayTime(deviceList[CUR_POS].id);
+    res.render('stayTime', {deviceList: deviceList, pos: CUR_POS, durationData: JSON.stringify(stayTime)});
 });
 
 /* 시간대별 이벤트 팝업 표출 횟수를 시각화하여 보여주는 Page */
 router.get('/advertise', async function(req, res) {
-    const adOption = await getAdvertisementCount();                                     // DB에서 시간대별 이벤트 표출 횟수를 가져와 echart에서 사용할 수 있도록 가공
-    res.render('advertise', {advertisementSerial: JSON.stringify(adOption)});           // echart 에서 사용할 가공한 데이터를 파라미터로 넘겨줌 ( advertise.ejs 를 표출)
+    const adOption = await getAdvertisementCount(deviceList[CUR_POS].id);                                     // DB에서 시간대별 이벤트 표출 횟수를 가져와 echart에서 사용할 수 있도록 가공
+    res.render('advertise', {deviceList: deviceList, pos: CUR_POS, advertisementSerial: JSON.stringify(adOption)});           // echart 에서 사용할 가공한 데이터를 파라미터로 넘겨줌 ( advertise.ejs 를 표출)
 });
 
 /* 모든 센서의 사용자 감지 이벤트에 대한 정보를 시각화하여 보여주는 Page */
 router.get('/punch', async function(req, res) {
-    const result = await query.getUserDetectionOfAll();                                 // DB 에서부터 모든 센서들의 사용자 감지 이벤트 데이터를 가져옴
-
+    const result = await query.getObjectPickupByDevice(deviceList[CUR_POS].id);                                 // DB 에서부터 모든 센서들의 사용자 감지 이벤트 데이터를 가져옴
     if (result.result) {
-        const convertedData = await convert.comparisionByDisplayStand(sensorList, result.message);          // echart 에서 사용하기 위해 시간대별로 데이터를 가공
+        const convertedData = await convert.comparisionByDisplayStand(deviceList[CUR_POS].sensors, result.message);          // echart 에서 사용하기 위해 시간대별로 데이터를 가공
         res.render('punchChart', {displayData: JSON.stringify(convertedData)});         // echart 에서 사용할 가공한 데이터를 파라미터로 넘겨줌 ( punchChart.ejs 를 표출)
     } else {
         res.render('punchChart', {displayData: []});                                    // Query Error 일 경우, 빈 데이터를 넘겨줌 ( punchChart.ejs 를 표출)
@@ -190,16 +235,13 @@ router.get('/popup/info/:settingId', async function(req, res) {
 router.post('/setting', async function(req, res) {
     const info = JSON.parse(req.body.info);                                     // 새로 등록하기 위한 팝업 설정을 가져옴
     const searchResult = await query.searchSettingAdvertisement(info.sensorId, info.key);           // DB에 센서 별로 등록된 팝업 Key 중 현재 등록하기 위한 팝업 Key 가 중복되는지 여부 판단
-    console.log(searchResult);
     if (searchResult.result) {
         if (searchResult.message[0].cnt > 0) {
             await res.json({result: false, message: "같은 key가 존재합니다."});     // Key 가 중복될 경우, return False
         } else {
             const updateResult = await query.setInvisibleAdvertisement(info.sensorId);          // 팝업을 등록할 센서에 등록된 이벤트 팝업들의 visible option 을 모두 false 로 변경
-            console.log(updateResult);
             if (updateResult.result) {
                 const result = await query.addSettingAdvertisement(info);       // 새로운 팝업을 등록
-                console.log(result);
                 if (result.result) {
                     await res.json({result: true, message: "설정 추가 완료"});
                 } else {
@@ -214,29 +256,24 @@ router.post('/setting', async function(req, res) {
     }
 });
 
-// DB 에 저장된 Sensor ID를 가진 센서의 사용자 감지 이벤트 데이터를 가져오는 함수
+/* 데이터베이스에서 요청 받은 SensorID에 대한 사용자 감지 이벤트 데이터를 가져와 그래프에서 사용할 수 있도록 변환하여 반환하는 함수 */
 async function getUserDetectionInDisplayStand(sensorsId) {
     let userDetectionEvent;
 
     if (sensorsId < 0) {
         return [];
     } else {
-        if (sensorList.length > 0) {
-            const userDetectionResult = await query.getUserDetection(sensorsId);            // DB 에 저장된 Sensor ID를 가진 센서의 사용자 감지 이벤트 데이터를 가져옴
-            if (userDetectionResult.result) {
-                const list = userDetectionResult.message.map(function (elem) {              // 데이터 가공
-                    return {
-                        userDetectionId: elem.user_detection_id,
-                        time: elem.time,
-                    }
-                });
+        const userDetectionResult = await query.getUserDetectionBySensor(sensorsId);            // DB 에 저장된 Sensor ID를 가진 센서의 사용자 감지 이벤트 데이터를 가져옴
+        if (userDetectionResult.result) {
+            const list = userDetectionResult.message.map(function (elem) {              // 데이터 가공
+                return {
+                    userDetectionId: elem.user_detection_id,
+                    time: elem.time,
+                }
+            });
 
-                if (list.length > 0) userDetectionEvent = list;
-                else userDetectionEvent = [];
-                console.log(userDetectionEvent);
-            } else {
-                userDetectionEvent = [];
-            }
+            if (list.length > 0) userDetectionEvent = list;
+            else userDetectionEvent = [];
         } else {
             userDetectionEvent = [];
         }
@@ -244,28 +281,24 @@ async function getUserDetectionInDisplayStand(sensorsId) {
     }
 }
 
-// DB 에 저장된 Sensor ID를 가진 센서의 물건 픽업 이벤트 데이터를 가져오는 함수
+/* 데이터베이스에서 요청 받은 SensorID에 대한 물건 픽업 이벤트 데이터를 가져와 그래프에서 사용할 수 있도록 변환하여 반환하는 함수 */
 async function getObjectPickupInDisplayStand(sensorsId) {
     let objectPickupEvent;
 
     if (sensorsId < 0) {
         return [];
     } else {
-        if (sensorList.length > 0) {
-            const objectPickupResult = await query.getObjectPickup(sensorsId);          // DB 에 저장된 Sensor ID를 가진 센서의 물건 픽업 이벤트 데이터를 가져옴
-            if (objectPickupResult.result) {
-                const list = objectPickupResult.message.map(function (elem) {           // 데이터 가공
-                    return {
-                        objectPickupId: elem.object_pickup_id,
-                        time: elem.time,
-                    }
-                });
+        const objectPickupResult = await query.getObjectPickupBySensor(sensorsId);          // DB 에 저장된 Sensor ID를 가진 센서의 물건 픽업 이벤트 데이터를 가져옴
+        if (objectPickupResult.result) {
+            const list = objectPickupResult.message.map(function (elem) {           // 데이터 가공
+                return {
+                    objectPickupId: elem.object_pickup_id,
+                    time: elem.time,
+                }
+            });
 
-                if (list.length > 0) objectPickupEvent = list;
-                else objectPickupEvent = [];
-            } else {
-                objectPickupEvent = [];
-            }
+            if (list.length > 0) objectPickupEvent = list;
+            else objectPickupEvent = [];
         } else {
             objectPickupEvent = [];
         }
@@ -273,33 +306,35 @@ async function getObjectPickupInDisplayStand(sensorsId) {
     }
 }
 
-// 팝업 표출 횟수를 return 하는 함수 (echart에서 사용할 수 있도록 데이터 가공)
-async function getAdvertisementCount(sensorsId) {
+/* 데이터베이스에서 요청 받은 디바이스에 대한 사용자 감지시간(Duration) 데이터를 가져와 그래프에서 사용할 수 있도록 가공하여 반환하는 함수 */
+async function getUserStayTime(deviceId) {
+    const result = await query.getDuration(deviceId);           // 사용자가 센서 앞에서 얼마나 머물렀는지를 알 수 있는 Duration 값을 DB 에서 가져옴
+    if (result.result) {
+        return await convert.hourlyAnalysis(result.message);             // Duration Data 를 시각화하기 위해 이벤트 발생 시간을 기준으로 데이터 가공
+    } else {
+        return [];
+    }
+}
+
+/* 데이터베이스에서 요청 받은 디바이스에 대한 Popup 표출 횟수 데이터를 가져와 그래프에서 사용할 수 있도록 가공하여 반환하는 함수  */
+async function getAdvertisementCount(deviceId) {
     let advertisementCount;
 
-    if (sensorsId < 0) {
-        return [];
-    } else {
-        if (sensorList.length > 0) {
-            const advertisementResult = await query.getAdvertisementData();         // DB 에서 팝업 표출 횟수를 가져옴
-            if (advertisementResult.result) {
-                const list = advertisementResult.message.map(function (elem) {      // 데이터를 가공하여 List 를 생성
-                    return {
-                        advertisementId: elem.advertisement_id,
-                        time: elem.time,
-                    }
-                });
-
-                if (list.length > 0) advertisementCount = list;
-                else advertisementCount = [];
-            } else {
-                advertisementCount = [];
+    const advertisementResult = await query.getAdvertisementData(deviceId);         // DB 에서 팝업 표출 횟수를 가져옴
+    if (advertisementResult.result) {
+        const list = advertisementResult.message.map(function (elem) {      // 데이터를 가공하여 List 를 생성
+            return {
+                advertisementId: elem.advertisement_id,
+                time: elem.time,
             }
-        } else {
-            advertisementCount = [];
-        }
-        return await convert.mConvertOptionSerial(advertisementCount);              // echart로 그래프를 그리기 위해서 List를 시간대별로 묶어서 가공
+        });
+
+        if (list.length > 0) advertisementCount = list;
+        else advertisementCount = [];
+    } else {
+        advertisementCount = [];
     }
+    return await convert.mConvertOptionSerial(advertisementCount);              // echart로 그래프를 그리기 위해서 List를 시간대별로 묶어서 가공
 }
 
 module.exports = router;
