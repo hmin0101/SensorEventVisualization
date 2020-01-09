@@ -60,6 +60,19 @@ router.post('/choice/device', async function(req, res) {
     }
 
     switch (type) {
+        case "access":
+            const accessEventData = await getAccessEventDataByDevice(deviceList[CUR_POS].id);
+            await res.json({result: true, accessEventData: accessEventData});
+            break;
+        case "pickup":
+            const pickupEventData = await getPickupEventDataByDevice(deviceList[CUR_POS].id);
+            await res.json({result: true, pickupEventData: pickupEventData});
+            break;
+        case "stay":
+            const sensorId = req.body.sensorId;
+            const stayEventData = await getStayEventDataBySensor(sensorId);
+            await res.json({result: true, stayEventData: stayEventData});
+            break;
         case "detect":
             const sensorIndex = req.body.sIndex;
             const udOption = await getUserDetectionInDisplayStand(deviceList[CUR_POS].sensors[sensorIndex].id);
@@ -78,6 +91,45 @@ router.post('/choice/device', async function(req, res) {
             await res.json({result: false, message: "Type Error"});
             break;
     }
+});
+
+/* ACCESS_EVENT */
+router.get('/event/access', async function(req, res) {
+    const accessEventData = await getAccessEventDataByDevice(deviceList[CUR_POS].id);
+    res.render('event_access', {currentMenu: "access", deviceList: deviceList, pos: CUR_POS, accessEventData: JSON.stringify(accessEventData)});
+});
+
+/* PICKUP_EVENT */
+router.get('/event/pickup', async function(req, res) {
+    const pickupEventData = await getPickupEventDataByDevice(deviceList[CUR_POS].id);
+    res.render('event_pickup', {currentMenu: "pickup", deviceList: deviceList, pos: CUR_POS, pickupEventData: JSON.stringify(pickupEventData)});
+});
+
+/* STAY_EVENT */
+router.get('/event/stay', async function(req, res) {
+    const stayEventData = await getStayEventDataBySensor(9);
+    res.render('event_stay', {currentMenu: "stay", deviceList: deviceList, pos: CUR_POS, stayEventData: JSON.stringify(stayEventData)});
+});
+
+/* ACCESS_EVENT */
+router.post('/sensor/list', function(req, res) {
+    const deviceId = req.body.deviceId;
+
+    let sensorList = [];
+    for (const device of deviceList) {
+        if (Number(device.id) === Number(deviceId)) {
+            sensorList = device.sensors;
+        }
+    }
+    res.json({result: true, sensorList: sensorList});
+});
+
+/* 디바이스의 각 센서별 이벤트 데이터 시각화 */
+router.get('/sensor/:id', async function(req, res) {
+    const sensorIndex = Number(req.params.id);
+    const udOption = await getUserDetectionInDisplayStand(deviceList[CUR_POS].sensors[sensorIndex-1].id);         // Sensor 에 대한 사용자 감지 이벤트를 가져오고 Chart 에서 사용할 수 있도록 처리
+    const opOption = await getObjectPickupInDisplayStand(deviceList[CUR_POS].sensors[sensorIndex-1].id);          // Sensor 에 대한 물건 픽업 이벤트를 가져오고 Chart 에서 사용할 수 있도록 처리
+    res.render('event-by-sensor', {currentMenu: "detail", sensorIndex: sensorIndex, deviceList: deviceList, pos: CUR_POS, userDetectionSerial: JSON.stringify(udOption), objectPickupSerial: JSON.stringify(opOption)});    // Sensor 에 각 이벤트 데이터를 파라미터로 넘겨줌 ( m1.ejs 를 표출 )
 });
 
 /* Sensor1 의 Event Data 를 시각화하여 보여주는 Page */
@@ -117,7 +169,7 @@ router.get('/stayTime', async function(req, res) {
 /* 시간대별 이벤트 팝업 표출 횟수를 시각화하여 보여주는 Page */
 router.get('/advertise', async function(req, res) {
     const adOption = await getAdvertisementCount(deviceList[CUR_POS].id);                                     // DB에서 시간대별 이벤트 표출 횟수를 가져와 echart에서 사용할 수 있도록 가공
-    res.render('advertise', {deviceList: deviceList, pos: CUR_POS, advertisementSerial: JSON.stringify(adOption)});           // echart 에서 사용할 가공한 데이터를 파라미터로 넘겨줌 ( advertise.ejs 를 표출)
+    res.render('advertise', {currentMenu: "advertise", deviceList: deviceList, pos: CUR_POS, advertisementSerial: JSON.stringify(adOption)});           // echart 에서 사용할 가공한 데이터를 파라미터로 넘겨줌 ( advertise.ejs 를 표출)
 });
 
 /* 모든 센서의 사용자 감지 이벤트에 대한 정보를 시각화하여 보여주는 Page */
@@ -256,6 +308,98 @@ router.post('/setting', async function(req, res) {
     }
 });
 
+/* 단말별 ACCESS EVENT 데이터 */
+async function getAccessEventDataByDevice(deviceId) {
+    const selectAccessEventResult = await query.getUserDetectionByDevice(deviceId);
+    if (selectAccessEventResult.result) {
+        const sensorListInDevice = selectAccessEventResult.message.map(function(elem) {
+            return {
+                sensorId: elem.sensors_id,
+                name: elem.name,
+                times: elem.times
+            }
+        });
+
+        const resultDataList = [];
+        for (const sensorData of sensorListInDevice) {
+            if (sensorData.times === null) {
+                const result = await convert.convertArrayToTimeData([]);
+
+                resultDataList.push({
+                    name: sensorData.name,
+                    data: result
+                });
+            } else {
+                const timeList = sensorData.times.split(",");
+                const result = await convert.convertArrayToTimeData(timeList);
+
+                resultDataList.push({
+                    name: sensorData.name,
+                    data: result
+                });
+            }
+        }
+
+        return await convert.convertDataToChartData(resultDataList, "line");
+    } else {
+        return [];
+    }
+}
+
+/* 단말별 PICKUP EVENT 데이터 */
+async function getPickupEventDataByDevice(deviceId) {
+    const selectPickupEventResult = await query.getObjectPickupByDevice(deviceId);
+    if (selectPickupEventResult.result) {
+        const sensorListInDevice = selectPickupEventResult.message.map(function(elem) {
+            return {
+                sensorId: elem.sensors_id,
+                name: elem.name,
+                times: elem.times
+            }
+        });
+
+        const resultDataList = [];
+        for (const sensorData of sensorListInDevice) {
+            if (sensorData.times === null) {
+                const result = await convert.convertArrayToTimeData([]);
+                resultDataList.push({
+                    name: sensorData.name,
+                    data: result
+                });
+            } else {
+                const timeList = sensorData.times.split(",");
+                const result = await convert.convertArrayToTimeData(timeList);
+
+                resultDataList.push({
+                    name: sensorData.name,
+                    data: result
+                });
+            }
+        }
+
+        return await convert.convertDataToChartData(resultDataList, "line");
+    } else {
+        return [];
+    }
+}
+
+/* 데이터베이스에서 요청 받은 디바이스에 대한 사용자 감지시간(Duration) 데이터를 가져와 그래프에서 사용할 수 있도록 가공하여 반환하는 함수 */
+async function getStayEventDataBySensor(sensorId) {
+    const selectStayEventResult = await query.getStayEventBySensor(sensorId);           // 사용자가 센서 앞에서 얼마나 머물렀는지를 알 수 있는 Duration 값을 DB 에서 가져옴
+    if (selectStayEventResult.result) {
+        const convertedData = await convert.convertStayTimeArrayToTimeData(selectStayEventResult.message[0]);             // Duration Data 를 시각화하기 위해 이벤트 발생 시간을 기준으로 데이터 가공
+        const resultDataList = [{
+            name: selectStayEventResult.message[0].name,
+            data: convertedData
+        }];
+
+        const chartDataList = await convert.convertDataToChartData(resultDataList, "boxplot");
+        return chartDataList[0];
+    } else {
+        return [];
+    }
+}
+
 /* 데이터베이스에서 요청 받은 SensorID에 대한 사용자 감지 이벤트 데이터를 가져와 그래프에서 사용할 수 있도록 변환하여 반환하는 함수 */
 async function getUserDetectionInDisplayStand(sensorsId) {
     let userDetectionEvent;
@@ -308,9 +452,9 @@ async function getObjectPickupInDisplayStand(sensorsId) {
 
 /* 데이터베이스에서 요청 받은 디바이스에 대한 사용자 감지시간(Duration) 데이터를 가져와 그래프에서 사용할 수 있도록 가공하여 반환하는 함수 */
 async function getUserStayTime(deviceId) {
-    const result = await query.getDuration(deviceId);           // 사용자가 센서 앞에서 얼마나 머물렀는지를 알 수 있는 Duration 값을 DB 에서 가져옴
-    if (result.result) {
-        return await convert.hourlyAnalysis(result.message);             // Duration Data 를 시각화하기 위해 이벤트 발생 시간을 기준으로 데이터 가공
+    const selectStayEventResult = await query.getDuration(deviceId);           // 사용자가 센서 앞에서 얼마나 머물렀는지를 알 수 있는 Duration 값을 DB 에서 가져옴
+    if (selectStayEventResult.result) {
+        return await convert.hourlyAnalysis(selectStayEventResult.message);             // Duration Data 를 시각화하기 위해 이벤트 발생 시간을 기준으로 데이터 가공
     } else {
         return [];
     }

@@ -27,7 +27,7 @@ module.exports = {
             const sensorSelectResult = await db.asyncSelect(sensorSelectQ);
             if (sensorSelectResult.result) {
                 const sensors = sensorSelectResult.message[0].sensors;
-                const detectionSelectQ = 'select a.sensors_id, group_concat(b.user_detection_id) as userDetectionList, group_concat(b.time) as times ' +
+                const detectionSelectQ = 'select a.sensors_id, a.name, group_concat(b.user_detection_id) as userDetectionList, group_concat(b.time) as times ' +
                     'from sensors as a inner join user_detection as b on a.sensors_id=b.sensors_id where a.sensors_id in ('+sensors+') group by a.sensors_id;';
                 return await db.asyncSelect(detectionSelectQ);
             } else {
@@ -62,7 +62,7 @@ module.exports = {
             const sensorSelectResult = await db.asyncSelect(sensorSelectQ);
             if (sensorSelectResult.result) {
                 const sensors = sensorSelectResult.message[0].sensors;
-                const detectionSelectQ = 'select object_pickup_id, time from object_pickup where sensors_id in ('+sensors+') group by sensors_id;';
+                const detectionSelectQ = 'select a.sensors_id, a.name, group_concat(b.object_pickup_id) as objectPickupList, group_concat(b.time) as times from sensors as a left join object_pickup as b on a.sensors_id=b.sensors_id where a.sensors_id in ('+sensors+') group by a.sensors_id;';
                 return await db.asyncSelect(detectionSelectQ);
             } else {
                 return {result: false, message: []};
@@ -81,19 +81,20 @@ module.exports = {
         }
     },
 
-    getObjectPickupDetail: async function(sensorsId) {
+    getAdvertisementData: async function(deviceId) {
         try {
-            const selectQ = 'select a.object_pickup_id, a.time, b.duration from object_pickup as a left join object_pickup_duration as b on a.object_pickup_id=b.object_pickup_id where a.sensors_id='+sensorsId+';';
+            const selectQ = 'select * from advertisement where device_id='+deviceId+';';
             return await db.asyncSelect(selectQ);
         } catch (err) {
             return err;
         }
     },
 
-    getAdvertisementData: async function(deviceId) {
+    getStayEventBySensor: async function(sensorId) {                 // 센서 별 User Detection Duration Data 를 DB 에서 가져옴
         try {
-            const selectQ = 'select * from advertisement where device_id='+deviceId+';';
-            return await db.asyncSelect(selectQ);
+            const selectStayTimeQ = 'select a.name, group_concat(b.time) as times, group_concat(c.duration) as stayTime from sensors as a ' +
+                'left join user_detection as b on a.sensors_id=b.sensors_id inner join user_detection_duration as c on b.user_detection_id=c.user_detection_id where a.sensors_id='+sensorId+' group by a.sensors_id;';
+            return await db.asyncSelect(selectStayTimeQ);
         } catch (err) {
             return err;
         }
@@ -105,8 +106,8 @@ module.exports = {
             const sensorSelectResult = await db.asyncSelect(sensorSelectQ);
             if (sensorSelectResult.result) {
                 const sensors = sensorSelectResult.message[0].sensors;
-                const durationSelectQ = 'select a.sensors_id, group_concat(a.time) as times, group_concat(b.duration) as durations ' +
-                    'from user_detection as a inner join user_detection_duration as b on a.user_detection_id=b.user_detection_id where a.sensors_id in ('+sensors+') group by a.sensors_id;';
+                const durationSelectQ = 'select a.sensors_id, a.name, group_concat(b.time) as times, group_concat(c.duration) as durations from sensors as a ' +
+                    'left join user_detection as b on a.sensors_id=b.sensors_id inner join user_detection_duration as c on b.user_detection_id=c.user_detection_id where a.sensors_id in ('+sensors+') group by a.sensors_id;';
                 return await db.asyncSelect(durationSelectQ);
             } else {
                 return sensorSelectResult;
@@ -163,7 +164,6 @@ module.exports = {
     },
 
     setInvisibleAdvertisement: async function(sensorsId) {
-        console.log(sensorsId);
         try {
             const selectQ = 'select advertisement_setting_id from advertisement_setting where sensors_id='+sensorsId+';';
             const selectResult =  await db.query(selectQ);

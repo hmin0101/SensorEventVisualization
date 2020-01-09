@@ -70,7 +70,7 @@
 <div id="wrapper">
 
     <% include ./nav %>
-
+    
     <div id="page-wrapper" class="gray-bg">
         <div class="row border-bottom">
             <nav class="navbar navbar-static-top white-bg" role="navigation" style="margin-bottom: 0">
@@ -90,14 +90,11 @@
                 <div class="col-lg-12">
                     <div class="ibox">
                         <div class="ibox-title">
-                            <h5>광고 표출 통계</h5>
-                            <div class="ibox-tools">
-                                <a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
-                            </div>
+                            <h5>PICKUP EVENT CHART</h5>
                         </div>
                         <div class="ibox-content" style="padding-top: 10px; padding-bottom: 10px">
                             <div class="row" id="connect-device-list">
-                                <div id="chart" style="width: 100%; height: 400px"></div>
+                                <div id="chart" style="width: 100%; height: 460px"></div>
                             </div>
                         </div>
                     </div>
@@ -127,42 +124,39 @@
 <script>
     $(document).ready(() => {
 
-        const advertisementSerial = JSON.parse('<%- advertisementSerial %>');       // 팝업 목록 데이터 (echart 에서 사용할 수 있도록 가공된 데이터)
-
+        const pickupEventData = JSON.parse('<%- pickupEventData %>');
+        const legendData = pickupEventData.map(function(elem) {
+            return elem.name;
+        });
+        const xAxisData = ['0 Hour','1 Hour','2 Hour','3 Hour','4 Hour','5 Hour','6 Hour','7 Hour','8 Hour','9 Hour','10 Hour','11 Hour','12 Hour','13 Hour', '14 Hour','15 Hour','16 Hour','17 Hour','18 Hour','19 Hour','20 Hour','21 Hour','22 Hour','23 Hour'];
         const option = {            // echart 생성을 위한 Option 설정
             tooltip: {
                 trigger: 'axis'
             },
             legend: {
                 padding: [20, 0, 10, 0],
-                data:['광고 횟수']
+                data: legendData
             },
             grid: {
-                left: '3%',
-                right: '4%',
-                bottom: '3%',
+                top: "15%",
+                left: "3%",
+                right: '3%',
+                bottom: '5%',
                 containLabel: true
             },
             xAxis: {
                 type: 'category',
                 boundaryGap: false,
-                data: ['0 Hour','1 Hour','2 Hour','3 Hour','4 Hour','5 Hour','6 Hour','7 Hour','8 Hour','9 Hour','10 Hour','11 Hour','12 Hour','13 Hour',
-                    '14 Hour','15 Hour','16 Hour','17 Hour','18 Hour','19 Hour','20 Hour','21 Hour','22 Hour','23 Hour','24 Hour']
+                data: xAxisData
             },
             yAxis: {
                 type: 'value'
             },
-            series: [
-                {
-                    name:'광고 횟수',
-                    type:'line',
-                    data: advertisementSerial,
-                }
-            ]
+            series: pickupEventData
         };
 
-        const chart = echarts.init(document.getElementById('chart'));
-        chart.setOption(option);
+        const chart = echarts.init(document.getElementById('chart'));       // echart 초기화
+        chart.setOption(option);                                            // option을 추가하여 생성
 
         // Select Device
         $('#select-device').on("change", function(e) {
@@ -171,14 +165,10 @@
             $.ajax({
                 type: "POST",
                 url: "/choice/device",
-                data: "type=popup&id="+deviceId+"&sIndex=0",
+                data: "type=pickup&id="+deviceId,
                 success: function(result) {
                     if (result) {
-                        option.series = [{
-                            name:'광고 횟수',
-                            type:'line',
-                            data: result.adCount,
-                        }];
+                        option.series = result.pickupEventData;
                         chart.setOption(option);
                     } else {
                         alert(result.message);

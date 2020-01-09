@@ -8712,3 +8712,24 @@ div.toast.toast-warning::before {
 .p-r-none {
     padding-right: 0;
 }
+
+/* Select Device */
+.nav .nav-select-device {
+  width: 100%;
+  padding: 0 25px 25px 25px;
+}
+.nav-select-device label {
+  color: #e7eaec;
+}
+.nav-select-device select {
+  padding: 3px 12px;
+  font-size: 13px;
+  height: 30px;
+  background-color: #495866;
+  border: none;
+  color: #e7eaec;
+  cursor: pointer;
+}
+.nav-select-device select option {
+  cursor: pointer;
+}

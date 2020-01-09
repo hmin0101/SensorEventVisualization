@@ -1,6 +1,7 @@
 <nav class="navbar-default navbar-static-side" role="navigation">
     <div class="sidebar-collapse">
         <ul class="nav metismenu" id="side-menu">
+            <% const activateItem = currentMenu; %>
             <li class="nav-header">
                 <div class="profile-element">
                     <a href="/">
@@ -10,27 +11,56 @@
                 </div>
                 <div class="logo-element">KI</div>
             </li>
-            <li class="active">
+            <li>
+                <div class="input-group nav-select-device">
+                    <label class="font-sm" for="select-device">Device</label>
+                    <select class="form-control" id="select-device">
+                        <% const devices = deviceList; %>
+                        <% let index = 0; %>
+                        <% for (const device of deviceList) { %>
+                            <% if (index === pos) { %>
+                                <option value="<%= device.id %>" selected><%= device.name %></option>
+                            <% } else { %>
+                                <option value="<%= device.id %>"><%= device.name %></option>
+                            <% } %>
+                            <% index++; %>
+                        <% } %>
+                    </select>
+                </div>
+            </li>
+            <% if (activateItem === "detail") { %><li class="active"><% } else { %><li><% } %>
                 <a href="/"><i class="fa fa-th-large"></i> <span class="nav-label">센서별/시간대</span><span class="fa arrow"></span></a>
-                <ul class="nav nav-second-level collapse">
-                    <li><a href="/m1">매대1</a></li>
-                    <li><a href="/m2">매대2</a></li>
-                    <li><a href="/m3">매대3</a></li>
-                    <li><a href="/m4">매대4</a></li>
+                <% if (activateItem === "detail") { %>
+                <ul class="nav nav-second-level collapse in">
+                    <% const subActivateItem = sensorIndex; %>
+                    <% if (Number(subActivateItem) === 1) { %><li class="active"><a href="/sensor/1">Sensor1</a></li><% } else { %><li><a href="/sensor/1">Sensor1</a></li><% } %>
+                    <% if (Number(subActivateItem) === 2) { %><li class="active"><a href="/sensor/2">Sensor2</a></li><% } else { %><li><a href="/sensor/2">Sensor2</a></li><% } %>
+                    <% if (Number(subActivateItem) === 3) { %><li class="active"><a href="/sensor/3">Sensor3</a></li><% } else { %><li><a href="/sensor/3">Sensor3</a></li><% } %>
+                    <% if (Number(subActivateItem) === 4) { %><li class="active"><a href="/sensor/4">Sensor4</a></li><% } else { %><li><a href="/sensor/4">Sensor4</a></li><% } %>
                 </ul>
+                <% } else { %>
+                <ul class="nav nav-second-level collapse">
+                    <li><a href="/sensor/1">Sensor1</a></li>
+                    <li><a href="/sensor/2">Sensor2</a></li>
+                    <li><a href="/sensor/3">Sensor3</a></li>
+                    <li><a href="/sensor/4">Sensor4</a></li>
+                </ul>
+                <% } %>
             </li>
-            <li>
-                <a href="/stayTime"><i class="fa fa-group"></i> <span class="nav-label">사용자 감지시간</span></a>
+            <% if (activateItem === "access") { %><li class="active"><% } else { %><li><% } %>
+                <a href="/event/access"><i class="fa fa-group"></i> <span class="nav-label">소극적 탐색</span></a>
             </li>
-            <li>
+            <% if (activateItem === "pickup") { %><li class="active"><% } else { %><li><% } %>
+                <a href="/event/pickup"><i class="fa fa-group"></i> <span class="nav-label">적극적 탐색</span></a>
+            </li>
+            <% if (activateItem === "stay") { %><li class="active"><% } else { %><li><% } %>
+                <a href="/event/stay"><i class="fa fa-group"></i> <span class="nav-label">지속적 탐색</span></a>
+            </li>
+            <% if (activateItem === "advertise") { %><li class="active"><% } else { %><li><% } %>
                 <a href="/advertise"><i class="fa fa-cloud"></i> <span class="nav-label">광고 표출</span></a>
-
             </li>
-            <li>
-                <a href="/punch"><i class="fa fa-cloud"></i> <span class="nav-label">매대별 비교</span></a>
-            </li>
-            <li>
-                <a href="/setting"><i class="fa fa-cog"></i> <span class="nav-label">광고 설정</span></a>
+            <% if (activateItem === "setting") { %><li class="active"><% } else { %><li><% } %>
+                <a href="/setting"><i class="fa fa-cog"></i> <span class="nav-label">설정</span></a>
             </li>
         </ul>
     </div>
