@@ -132,6 +132,11 @@ router.get('/sensor/:id', async function(req, res) {
     res.render('event-by-sensor', {currentMenu: "detail", sensorIndex: sensorIndex, deviceList: deviceList, pos: CUR_POS, userDetectionSerial: JSON.stringify(udOption), objectPickupSerial: JSON.stringify(opOption)});    // Sensor 에 각 이벤트 데이터를 파라미터로 넘겨줌 ( m1.ejs 를 표출 )
 });
 
+/* SETTING */
+router.get('/setting', async function(req, res) {
+    res.render('setting', {currentMenu: "setting", deviceList: deviceList, pos: CUR_POS});    // Sensor 에 각 이벤트 데이터를 파라미터로 넘겨줌 ( m1.ejs 를 표출 )
+});
+
 /* Sensor1 의 Event Data 를 시각화하여 보여주는 Page */
 router.get('/m1', async function(req, res) {
     const udOption = await getUserDetectionInDisplayStand(deviceList[CUR_POS].sensors[0].id);         // Sensor 1 에 대한 사용자 감지 이벤트를 가져오고 Chart 에서 사용할 수 있도록 처리
@@ -183,32 +188,32 @@ router.get('/punch', async function(req, res) {
     }
 });
 
-/* 각 센서별 이벤트 팝업을 등록하고 설정하는 Page */
-router.get('/setting', async function(req, res) {
-
-    let advertisementSettingList = [];
-
-    if (sensorList.length > 0) {
-        const result = await query.getSettingAdvertisementList(sensorList[0].sensorsId);            // DB에서 Sensor 1 에 등록된 팝업을 가져옴
-        if (result.result) {
-            advertisementSettingList = result.message.map(function(elem) {                          // 데이터 가공
-                return {
-                    advertisementSettingId: elem.advertisement_setting_id,
-                    key: elem.key,
-                    url: elem.url,
-                    xAxis: elem.x_axis,
-                    yAxis: elem.y_axis,
-                    width: elem.width,
-                    height: elem.height,
-                    duration: elem.duration,
-                }
-            });
-        }
-        res.render('setting', {sensorList: sensorList, advertisementSettingList: advertisementSettingList});            // Sensor List 와 팝업 List 를 파라미터로 넘겨줌 ( setting.ejs 표출 )
-    } else {
-        res.render('setting', {sensorList: [], advertisementSettingList: advertisementSettingList});            // Query Error 일 경우, 빈 데이터를 넘겨줌 ( setting.ejs 를 표출)
-    }
-});
+// /* 각 센서별 이벤트 팝업을 등록하고 설정하는 Page */
+// router.get('/setting', async function(req, res) {
+//
+//     let advertisementSettingList = [];
+//
+//     if (sensorList.length > 0) {
+//         const result = await query.getSettingAdvertisementList(sensorList[0].sensorsId);            // DB에서 Sensor 1 에 등록된 팝업을 가져옴
+//         if (result.result) {
+//             advertisementSettingList = result.message.map(function(elem) {                          // 데이터 가공
+//                 return {
+//                     advertisementSettingId: elem.advertisement_setting_id,
+//                     key: elem.key,
+//                     url: elem.url,
+//                     xAxis: elem.x_axis,
+//                     yAxis: elem.y_axis,
+//                     width: elem.width,
+//                     height: elem.height,
+//                     duration: elem.duration,
+//                 }
+//             });
+//         }
+//         res.render('setting', {sensorList: sensorList, advertisementSettingList: advertisementSettingList});            // Sensor List 와 팝업 List 를 파라미터로 넘겨줌 ( setting.ejs 표출 )
+//     } else {
+//         res.render('setting', {sensorList: [], advertisementSettingList: advertisementSettingList});            // Query Error 일 경우, 빈 데이터를 넘겨줌 ( setting.ejs 를 표출)
+//     }
+// });
 
 /* 팝업 설정 Page 에서 센서를 선택할 경우, 해당 센서에 등록된 팝업 목록을 가져오는 API */
 router.get('/setting/:sensorId', async function(req, res) {

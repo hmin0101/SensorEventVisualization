@@ -45,43 +45,7 @@
 <body>
 <div id="wrapper">
 
-    <nav class="navbar-default navbar-static-side" role="navigation">
-        <div class="sidebar-collapse">
-            <ul class="nav metismenu" id="side-menu">
-                <li class="nav-header">
-                    <div class="profile-element">
-                        <a href="/">
-                            <span class="block font-bold" style="font-size: 24px">KAIST</span>
-                            <span class="text-muted text-xs block">&copy copyright 2019</span>
-                        </a>
-                    </div>
-                    <div class="logo-element">KI</div>
-                </li>
-                <li>
-                    <a href="/"><i class="fa fa-th-large"></i> <span class="nav-label">센서별/시간대</span><span class="fa arrow"></span></a>
-                    <ul class="nav nav-second-level collapse">
-                        <li><a href="/m1">매대1</a></li>
-                        <li><a href="/m2">매대2</a></li>
-                        <li><a href="/m3">매대3</a></li>
-                        <li><a href="/m4">매대4</a></li>
-                    </ul>
-                </li>
-                <li>
-                    <a href="/stayTime"><i class="fa fa-group"></i> <span class="nav-label">사용자 감지시간</span></a>
-                </li>
-                <li>
-                    <a href="/advertise"><i class="fa fa-cloud"></i> <span class="nav-label">광고표출</span></a>
-
-                </li>
-                <li>
-                    <a href="/punch"><i class="fa fa-cloud"></i> <span class="nav-label">매대별 비교</span></a>
-                </li>
-                <li class="active">
-                    <a href="/setting"><i class="fa fa-cog"></i> <span class="nav-label">광고 설정</span></a>
-                </li>
-            </ul>
-        </div>
-    </nav>
+    <% include ./nav %>
 
     <div id="page-wrapper" class="gray-bg">
         <div class="row border-bottom">
@@ -114,11 +78,7 @@
                                         <div class="flex-item-50 flex m-r-xs">
                                             <div class="flex-item-50 m-r-xs">
                                                 <small class="subTitle">Sensor</small>
-                                                <select class="form-control" id="select-sensor">
-                                                    <% sensorList.forEach(function(elem) { %>
-                                                        <option value="<%= elem.sensorsId %>"><%= elem.name %></option>
-                                                    <% }); %>
-                                                </select>
+                                                <select class="form-control" id="select-sensor"></select>
                                             </div>
                                             <div class="flex-item-50 m-l-xs">
                                                 <small class="subTitle">key</small>
@@ -168,22 +128,12 @@
                                 <div class="form-group">
                                     <small class="subTitle">Sensor</small>
                                     <select class="form-control" id="select-sensor-using-send">
-                                        <% sensorList.forEach(function(elem) { %>
-                                            <option value="<%= elem.sensorsId %>"><%= elem.name %></option>
-                                        <% }); %>
                                     </select>
                                 </div>
                                 <div class="hr-line-dashed"></div>
                                 <div class="form-group">
                                     <small class="subTitle">Sensor</small>
                                     <select class="form-control" id="select-advertisement">
-                                        <% if (advertisementSettingList.length > 0) { %>
-                                            <% advertisementSettingList.forEach(function(elem) { %>
-                                                <option value="<%= elem.advertisementSettingId %>"><%= elem.key %></option>
-                                            <% }); %>
-                                        <% } else { %>
-                                            <option value="-1">저장된 광고가 없습니다.</option>
-                                        <% } %>
                                     </select>
                                 </div>
                                 <div class="hr-line-dashed"></div>
