@@ -215,4 +215,42 @@ module.exports = {
         }
     },
 
+    getPopupSetting: async function(deviceId) {
+        try {
+            const selectQ = 'select * from advertisement_setting where device_id='+deviceId+';';
+            return await db.asyncQuery(selectQ);
+        } catch (err) {
+            return err;
+        }
+    },
+
+    addPopupSetting: async function(deviceId, option) {
+        try {
+            const insertQ = 'insert into advertisement_setting (device_id, advertisement_setting.key, url, x_axis, y_axis, width, height, duration, visible) value ' +
+                '('+deviceId+', "'+option.name+'", "'+option.url+'", '+option.pos_x+', '+option.pos_y+', '+option.width+', '+option.height+', '+option.duration+', 1)';
+            return await db.query(insertQ);
+        } catch (err) {
+            return err;
+        }
+    },
+
+    updatePopupSetting: async function(deviceId, option) {
+        try {
+            const insertQ = 'update advertisement_setting set advertisement_setting.key="'+option.name+'", url="'+option.url+'", x_axis='+option.pos_x+', y_axis='+option.pos_y+', ' +
+                'width='+option.width+', height='+option.height+', duration='+option.duration+' where advertisement_setting_id='+option.id+';';
+            return await db.query(insertQ);
+        } catch (err) {
+            return err;
+        }
+    },
+
+    deletePopupSetting: async function(settingId) {
+        try {
+            const deleteQ = 'delete from advertisement_setting where advertisement_setting_id='+settingId+';';
+            return await db.query(deleteQ);
+        } catch (err) {
+            return err;
+        }
+    },
+
 };

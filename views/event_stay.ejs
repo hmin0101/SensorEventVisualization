@@ -83,7 +83,6 @@
     $(document).ready(() => {
 
         const stayEventData = JSON.parse('<%- stayEventData %>');       // 사용자 감지 이벤트의 지속 시간 데이터 (echart 에서 사용할 수 있도록 가공된 데이터)
-        console.log(stayEventData);
         // Data
         const data = echarts.dataTool.prepareBoxplotData(stayEventData.data);
 
@@ -127,18 +126,11 @@
                     show: true
                 }
             },
-            series: [
-                {
-                    name: 'boxplot',
-                    type: 'boxplot',
-                    data: data.boxData,
-                },
-                {
-                    name: 'outlier',
-                    type: 'scatter',
-                    data: data.outliers
-                }
-            ]
+            series: [{
+                name: 'boxplot',
+                type: 'boxplot',
+                data: data.boxData,
+            }]
         };
 
         const chart = echarts.init(document.getElementById('chart'));       // echart 초기화

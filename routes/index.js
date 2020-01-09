@@ -42,7 +42,7 @@ let deviceList = [];
 
 /* Main 접속 시, /m1 으로 redirect */
 router.get('/', function(req, res, next) {
-  res.redirect('/m1');
+  res.redirect('/sensor/1');
 });
 
 /*
@@ -73,19 +73,9 @@ router.post('/choice/device', async function(req, res) {
             const stayEventData = await getStayEventDataBySensor(sensorId);
             await res.json({result: true, stayEventData: stayEventData});
             break;
-        case "detect":
-            const sensorIndex = req.body.sIndex;
-            const udOption = await getUserDetectionInDisplayStand(deviceList[CUR_POS].sensors[sensorIndex].id);
-            const opOption = await getObjectPickupInDisplayStand(deviceList[CUR_POS].sensors[sensorIndex].id);
-            await res.json({result: true, udOption: udOption, opOption: opOption});
-            break;
-        case "stayTime":
-            const stayTime = await getUserStayTime(deviceList[CUR_POS].id);
-            await res.json({result: true, stayTime: stayTime});
-            break;
-        case "popup":
-            const adCount = await getAdvertisementCount(deviceList[CUR_POS].id);
-            await res.json({result: true, adCount: adCount});
+        case "setting":
+            const list = await getPopupList(deviceList[CUR_POS].id);
+            await res.json({result: true, list: list});
             break;
         default:
             await res.json({result: false, message: "Type Error"});
@@ -134,6 +124,52 @@ router.get('/sensor/:id', async function(req, res) {
 
 /* SETTING */
 router.get('/setting', async function(req, res) {
+    res.render('setting', {currentMenu: "setting", deviceList: deviceList, pos: CUR_POS});    // Sensor 에 각 이벤트 데이터를 파라미터로 넘겨줌 ( m1.ejs 를 표출 )
+});
+
+/* SELECT SETTING */
+router.get('/setting/popup/list', async function(req, res) {
+    const result = await getPopupList(deviceList[CUR_POS].id);
+    await res.json(result);
+});
+
+async function getPopupList(deviceId) {
+    const result = await query.getPopupSetting(deviceId);
+    if (result.result) {
+        return await result.message.map(function(elem) {
+            return {
+                id: elem.advertisement_setting_id,
+                name: elem.key,
+                url: elem.url,
+                pos_x: elem.x_axis,
+                pos_y: elem.y_axis,
+                width: elem.width,
+                height: elem.height,
+                duration: elem.duration,
+                type: elem.type,
+            }
+        });
+    } else {
+        return [];
+    }
+}
+
+/* ADD SETTING */
+router.post('/setting/popup/add', async function(req, res) {
+    const option = JSON.parse(req.body.option);
+    const result = await query.addPopupSetting(deviceList[CUR_POS].id, option);
+    await res.json(result);
+});
+
+/* UPDATE SETTING */
+router.post('/setting/popup/update', async function(req, res) {
+    const option = JSON.parse(req.body.option);
+    const result = await query.updatePopupSetting(deviceList[CUR_POS].id, option);
+    await res.json(result);
+});
+
+/* DELETE SETTING */
+router.post('/setting/popup/delete', async function(req, res) {
     res.render('setting', {currentMenu: "setting", deviceList: deviceList, pos: CUR_POS});    // Sensor 에 각 이벤트 데이터를 파라미터로 넘겨줌 ( m1.ejs 를 표출 )
 });
 
