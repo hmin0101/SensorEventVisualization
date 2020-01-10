@@ -2,6 +2,7 @@ const db = require('../db/db_query');
 
 module.exports = {
 
+    /* Device List */
     getDeviceList: async function() {
         try {
             const selectQ = 'select * from device';
@@ -11,7 +12,7 @@ module.exports = {
         }
     },
 
-
+    /* Sensor List */
     getSensorList: async function() {
         try {
             const selectQ = 'select * from sensors';
@@ -41,15 +42,6 @@ module.exports = {
     getUserDetectionBySensor: async function(sensorsId) {
         try {
             const selectQ = 'select user_detection_id, time from user_detection where sensors_id='+sensorsId+';';
-            return await db.asyncSelect(selectQ);
-        } catch (err) {
-            return err;
-        }
-    },
-
-    getUserDetectionDetail: async function(sensorsId) {
-        try {
-            const selectQ = 'select a.user_detection_id, a.time, b.duration from user_detection as a inner join user_detection_duration as b on a.user_detection_id=b.user_detection_id where a.sensors_id='+sensorsId+';';
             return await db.asyncSelect(selectQ);
         } catch (err) {
             return err;
@@ -90,74 +82,11 @@ module.exports = {
         }
     },
 
-    getStayEventBySensor: async function(sensorId) {                 // 센서 별 User Detection Duration Data 를 DB 에서 가져옴
+    getStayEventBySensor: async function(sensorId) {
         try {
             const selectStayTimeQ = 'select a.name, group_concat(b.time) as times, group_concat(c.duration) as stayTime from sensors as a ' +
                 'left join user_detection as b on a.sensors_id=b.sensors_id inner join user_detection_duration as c on b.user_detection_id=c.user_detection_id where a.sensors_id='+sensorId+' group by a.sensors_id;';
             return await db.asyncSelect(selectStayTimeQ);
-        } catch (err) {
-            return err;
-        }
-    },
-
-    getDuration: async function(deviceId) {                 // 센서 별 User Detection Duration Data 를 DB 에서 가져옴
-        try {
-            const sensorSelectQ = 'select group_concat(b.sensors_id) as sensors from device as a inner join sensors as b on a.device_id=b.device_id where a.device_id='+deviceId+';';
-            const sensorSelectResult = await db.asyncSelect(sensorSelectQ);
-            if (sensorSelectResult.result) {
-                const sensors = sensorSelectResult.message[0].sensors;
-                const durationSelectQ = 'select a.sensors_id, a.name, group_concat(b.time) as times, group_concat(c.duration) as durations from sensors as a ' +
-                    'left join user_detection as b on a.sensors_id=b.sensors_id inner join user_detection_duration as c on b.user_detection_id=c.user_detection_id where a.sensors_id in ('+sensors+') group by a.sensors_id;';
-                return await db.asyncSelect(durationSelectQ);
-            } else {
-                return sensorSelectResult;
-            }
-        } catch (err) {
-            return err;
-        }
-    },
-
-    getSettingAdvertisementList: async function(sensorsId) {
-        try {
-            const selectQ = 'select * from advertisement_setting where sensors_id='+sensorsId+';';
-            return await db.query(selectQ);
-        } catch (err) {
-            return err;
-        }
-    },
-
-    getSettingAdvertisement: async function(settingId) {
-        try {
-            const selectQ = 'select * from advertisement_setting where advertisement_setting_id='+settingId+';';
-            return await db.query(selectQ);
-        } catch (err) {
-            return err;
-        }
-    },
-
-    searchSettingAdvertisement: async function(sensorsId, settingKey) {
-        try {
-            const selectQ = 'select count(*) as cnt from advertisement_setting where sensors_id='+sensorsId+' and advertisement_setting.key="'+settingKey+'";';
-            return await db.query(selectQ);
-        } catch (err) {
-            return err;
-        }
-    },
-
-    // deleteSettingAdvertisement: async function(sensorsId, settingName) {
-    //     try {
-    //         const selectQ = 'select count(*) as cnt from advertisement_setting where name="'+settingName+'" and sensors_id='+sensorsId+';';
-    //         return await db.query(selectQ);
-    //     } catch (err) {
-    //         return err;
-    //     }
-    // },
-
-    addSettingAdvertisement: async function(info) {
-        try {
-            const insertQ = 'insert into advertisement_setting (sensors_id, advertisement_setting.key, url, x_axis, y_axis, width, height, duration, visible) value ' +
-                '('+info.sensorId+', "'+info.key+'", "'+info.url+'", '+info.xAxis+', '+info.yAxis+', '+info.width+', '+info.height+', '+info.duration+', 1)';
-            return await db.query(insertQ);
         } catch (err) {
             return err;
         }
@@ -236,6 +165,14 @@ module.exports = {
 
     updatePopupSetting: async function(deviceId, option) {
         try {
+            const selectQ = 'select group_concat(advertisement_setting_id) as ids from advertisement_setting where device_id='+deviceId+' and visible=1 group by device_id;';
+            const selectResult = await db.query(selectQ);
+            if (selectResult.result) {
+                for (const elem of selectResult.message) {
+                    elem.adver
+                }
+            }
+
             const insertQ = 'update advertisement_setting set advertisement_setting.key="'+option.name+'", url="'+option.url+'", x_axis='+option.pos_x+', y_axis='+option.pos_y+', ' +
                 'width='+option.width+', height='+option.height+', duration='+option.duration+' where advertisement_setting_id='+option.id+';';
             return await db.query(insertQ);

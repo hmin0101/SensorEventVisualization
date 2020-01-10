@@ -281,9 +281,9 @@ function SmoothlyMenu() {
 
 // Dragable panels
 function WinMove() {
-    var element = "[class*=col]";
-    var handle = ".ibox-title";
-    var connect = "[class*=col]";
+    var element = "[class*=arrange-area]";
+    var handle = ".form-draggable";
+    var connect = "[class*=arrange-area]";
     $(element).sortable(
         {
             handle: handle,

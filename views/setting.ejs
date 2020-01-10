@@ -69,6 +69,32 @@
         .form-control {
             font-size: 12px;
         }
+
+        .arrange-area {
+            display: flex;
+            padding: 20px 10px;
+        }
+        .arrange-area .sub-item {
+            border: 1px solid #e7eaec;
+            flex: 1;
+            margin: 0 10px;
+            padding: 13px;
+            text-align: center;
+            box-shadow: 0 1px 1px rgba(60, 60, 60, 0.3), 0 1px 2px rgba(60, 60, 60, 0.22);
+        }
+        .sub-item .device-name {
+            margin: 0 0 10px 0;
+            font-size: 17px;
+            font-weight: 400;
+        }
+        .sub-item .input-group {
+            display: inline;
+        }
+        .sub-item .dropdown-toggle {
+            font-size: 9px;
+            font-weight: 100;
+            padding: 3px 6px;
+        }
     </style>
 </head>
 
@@ -186,13 +212,45 @@
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-lg-4">
+                        <div class="col-lg-12">
                             <div class="ibox">
                                 <div class="ibox-title">
-                                    <h5>센서 설정</h5>
+                                    <h5>센서 배치 순서</h5>
+                                    <div class="ibox-tools">
+                                        <a id="btn-save"><i class="fa fa-save"></i></a>
+                                    </div>
                                 </div>
-                                <div class="ibox-content">
-
+                                <div class="ibox-content no-padding">
+                                    <div class="arrange-area">
+                                        <% for (const elem of deviceList) { %>
+                                            <div class="sub-item">
+                                                <div class="form-draggable">
+                                                    <h5 class="device-name" data-id="<%= elem.id %>"><%= elem.name %></h5>
+                                                    <div>
+                                                        <div class="input-group m-r-xs">
+                                                            <button data-toggle="dropdown" class="btn btn-white btn-sm dropdown-toggle" type="button" id="mapping-sensor">Sensor1</button>
+                                                            <ul class="dropdown-menu">
+                                                                <li><a>Sensor1</a></li>
+                                                                <li><a>Sensor2</a></li>
+                                                                <li><a>Sensor3</a></li>
+                                                                <li><a>Sensor4</a></li>
+                                                            </ul>
+                                                        </div>
+                                                        <div class="input-group m-l-xs">
+                                                            <button data-toggle="dropdown" class="btn btn-white btn-sm dropdown-toggle" type="button" id="mapping-type">IR</button>
+                                                            <ul class="dropdown-menu">
+                                                                <li><a>IR</a></li>
+                                                                <li><a>IR2:0ch</a></li>
+                                                                <li><a>IR2:1ch</a></li>
+                                                                <li><a>IR2:2ch</a></li>
+                                                                <li><a>IR2:3ch</a></li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        <% } %>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -216,6 +274,8 @@
 <script src="/javascripts/jquery-ui.min.js"></script>
 <!-- FooTable -->
 <script src="/javascripts/footable-3.1.6.js"></script>
+<!-- jQuery Touch Punch UI -->
+<script src="/javascripts/jquery-ui-touch-punch.min.js"></script>
 <script>
     $(document).ready(() => {
 
@@ -243,8 +303,6 @@
 
         $(document).on('click', '.table .enable-click', function(e) {
             const row = FooTable.getRow(this).value;
-
-
 
             $('#select-event option').each(function(e) {
                 const type = $(this).val();
@@ -355,6 +413,54 @@
                     }
                 }
             });
+        });
+
+        // Div 를 움직일 수 있게 됨
+        WinMove();
+
+        $('#btn-save').on('click', function(e) {
+            const setting = {
+                arrange: [],
+                mapping: {}
+            };
+
+            $('.arrange-area .form-draggable').each(function() {
+                const deviceName = $(this).find('.device-name').text();
+                const sensor = $(this).find('#mapping-sensor').text();
+                const type = $(this).find('#mapping-type').text();
+
+                setting.arrange.push(deviceName);
+
+                if (type !== "IR") {
+                    const split = type.split(':');
+                    setting.mapping[deviceName] = {
+                        sensor: sensor,
+                        type: split[0],
+                        channel: split[1]
+                    };
+                } else {
+                    setting.mapping[deviceName] = {
+                        sensor: sensor,
+                        type: type,
+                        channel: 0
+                    };
+                }
+            });
+
+            $.ajax({
+                type: "POST",
+                url: "http://192.168.0.14:9000/setting/arrange/device",
+                data: "setting="+JSON.stringify(setting),
+                // success: function(result) {
+                //     alert(result);
+                // }
+            });
+        });
+
+        $('.dropdown-menu li a').on('click', function(e) {
+            const value = $(this).text();
+            const form = $(this).parent().parent().parent();
+            form.find('.dropdown-toggle').text(value);
         });
 
     });
