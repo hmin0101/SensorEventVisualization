@@ -2,7 +2,7 @@ const db = require('../db/db_query');
 
 module.exports = {
 
-    /* Device List */
+    /* DEVICE LIST */
     getDeviceList: async function() {
         try {
             const selectQ = 'select * from device';
@@ -12,7 +12,7 @@ module.exports = {
         }
     },
 
-    /* Sensor List */
+    /* SENSOR LIST */
     getSensorList: async function() {
         try {
             const selectQ = 'select * from sensors';
@@ -22,7 +22,7 @@ module.exports = {
         }
     },
 
-    /* 센서 기준 User Event */
+    /* 센서의 기준 ACCESS EVENT */
     getUserDetectionBySensor: async function(sensorsId) {
         try {
             const selectQ = 'select user_detection_id, time from user_detection where sensors_id='+sensorsId+';';
@@ -32,7 +32,7 @@ module.exports = {
         }
     },
 
-    /* 단말 기준 Access Event (센서 4개의 데이터) */
+    /* 단말의 ACCESS EVENT (센서 4개의 데이터) */
     getUserDetectionByDevice: async function(deviceId) {
         try {
             const sensorSelectQ = 'select group_concat(b.sensors_id) as sensors from device as a inner join sensors as b on a.device_id=b.device_id where a.device_id='+deviceId+';';
@@ -50,6 +50,17 @@ module.exports = {
         }
     },
 
+    /* 센서의 PICKUP EVENT */
+    getObjectPickupBySensor: async function(sensorsId) {
+        try {
+            const selectQ = 'select object_pickup_id, time from object_pickup where sensors_id='+sensorsId+';';
+            return await db.asyncSelect(selectQ);
+        } catch (err) {
+            return err;
+        }
+    },
+
+    /* 단말의 PICKUP EVENT (센서 4개의 데이터) */
     getObjectPickupByDevice: async function(deviceId) {
         try {
             const sensorSelectQ = 'select group_concat(b.sensors_id) as sensors from device as a inner join sensors as b on a.device_id=b.device_id where a.device_id='+deviceId+';';
@@ -66,24 +77,7 @@ module.exports = {
         }
     },
 
-    getObjectPickupBySensor: async function(sensorsId) {
-        try {
-            const selectQ = 'select object_pickup_id, time from object_pickup where sensors_id='+sensorsId+';';
-            return await db.asyncSelect(selectQ);
-        } catch (err) {
-            return err;
-        }
-    },
-
-    getAdvertisementData: async function(deviceId) {
-        try {
-            const selectQ = 'select * from advertisement where device_id='+deviceId+';';
-            return await db.asyncSelect(selectQ);
-        } catch (err) {
-            return err;
-        }
-    },
-
+    /* 센서의 STAY TIME */
     getStayEventBySensor: async function(sensorId) {
         try {
             const selectStayTimeQ = 'select a.name, group_concat(b.time) as times, group_concat(c.duration) as stayTime from sensors as a ' +
@@ -94,59 +88,18 @@ module.exports = {
         }
     },
 
-    setInvisibleAdvertisement: async function(sensorsId) {
+    /* 단말의 팝업 표출 횟수 */
+    getDisplayPopupByDevice: async function(deviceId) {
         try {
-            const selectQ = 'select advertisement_setting_id from advertisement_setting where sensors_id='+sensorsId+';';
-            const selectResult =  await db.query(selectQ);
-            if (selectResult.result) {
-                const size = selectResult.message.length;
-                const list = selectResult.message.map(function(elem) {
-                    return elem.advertisement_setting_id;
-                });
-
-                if (selectResult.message.length > 0) {
-
-                    let cnt = 0;
-                    for (id of list) {
-                        const updateQ = 'update advertisement_setting set visible=0 where advertisement_setting_id=' + id + ';';
-                        const updateResult = await db.query(updateQ);
-                        if (updateResult.result) {
-                            cnt++;
-                        } else {
-                            return {result: false, message: "Update Error"};
-                        }
-
-                        if (cnt === size) {
-                            return {result: true, message: "Update Complete"};
-                        }
-                    }
-                    return {result: false, message: "Error"};
-                } else {
-                    return {result: true};
-                }
-            } else {
-                return {result: false, message: "Select Error"};
-            }
+            const selectQ = 'select * from advertisement where device_id='+deviceId+';';
+            return await db.asyncSelect(selectQ);
         } catch (err) {
             return err;
         }
     },
 
-    setVisibleAdvertisement: async function(settingId) {
-        try {
-            const updateQ = 'update advertisement_setting set visible=1 where advertisement_setting_id='+settingId+';';
-            const updateResult =  await db.query(updateQ);
-            if (updateResult.result) {
-                return {result: true, message: "Update Complete"};
-            } else {
-                return {result: false, message: "Update Error"};
-            }
-        } catch (err) {
-            return err;
-        }
-    },
-
-    getPopupSetting: async function(deviceId) {
+    /* 현재 선택한 단말의 팝업 내역 */
+    getPopupSettingList: async function(deviceId) {
         try {
             const selectQ = 'select * from advertisement_setting where device_id='+deviceId+';';
             return await db.asyncQuery(selectQ);
@@ -154,35 +107,41 @@ module.exports = {
             return err;
         }
     },
-
+    
+    /* 현재 선택한 단말에 대해 팝업 추가 */
     addPopupSetting: async function(deviceId, option) {
         try {
-            const insertQ = 'insert into advertisement_setting (device_id, advertisement_setting.key, url, x_axis, y_axis, width, height, duration, visible) value ' +
-                '('+deviceId+', "'+option.name+'", "'+option.url+'", '+option.pos_x+', '+option.pos_y+', '+option.width+', '+option.height+', '+option.duration+', 1)';
+            const insertQ = 'insert into advertisement_setting (device_id, type, advertisement_setting.key, url, x_axis, y_axis, width, height, duration, visible) value ' +
+                '('+deviceId+', "'+option.type+'", "'+option.name+'", "'+option.url+'", '+option.pos_x+', '+option.pos_y+', '+option.width+', '+option.height+', '+option.duration+', 1)';
             return await db.query(insertQ);
         } catch (err) {
             return err;
         }
     },
 
+    /* 현재 선택한 단말의 팝업 갱신 */
     updatePopupSetting: async function(deviceId, option) {
         try {
             const selectQ = 'select group_concat(advertisement_setting_id) as ids from advertisement_setting where device_id='+deviceId+' and visible=1 group by device_id;';
             const selectResult = await db.query(selectQ);
             if (selectResult.result) {
-                for (const elem of selectResult.message) {
-                    elem.adver
+                const setting_id_lst = selectResult.message[0].ids;
+                const updateQ = 'update advertisement_setting set visible=0 where type="'+option.type+'" and advertisement_setting_id in ('+setting_id_lst+')';
+                const result = await db.query(updateQ);
+                if (!result.result) {
+                    return result;
                 }
             }
 
-            const insertQ = 'update advertisement_setting set advertisement_setting.key="'+option.name+'", url="'+option.url+'", x_axis='+option.pos_x+', y_axis='+option.pos_y+', ' +
-                'width='+option.width+', height='+option.height+', duration='+option.duration+' where advertisement_setting_id='+option.id+';';
-            return await db.query(insertQ);
+            const updateQ = 'update advertisement_setting set type="'+option.type+'", advertisement_setting.key="'+option.name+'", url="'+option.url+'", x_axis='+option.pos_x+', y_axis='+option.pos_y+', ' +
+                'width='+option.width+', height='+option.height+', duration='+option.duration+', visible=1 where advertisement_setting_id='+option.id+';';
+            return await db.query(updateQ);
         } catch (err) {
             return err;
         }
     },
 
+    /* 현재 선택한 단말의 팝업 삭제 */
     deletePopupSetting: async function(settingId) {
         try {
             const deleteQ = 'delete from advertisement_setting where advertisement_setting_id='+settingId+';';

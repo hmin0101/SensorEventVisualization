@@ -11,6 +11,12 @@
 
     <link rel="stylesheet" href="/stylesheets/animate.css">
     <link rel="stylesheet" href="/stylesheets/style.css">
+    <style>
+        #label-sensor {
+            margin: 0;
+            font-weight: 100;
+        }
+    </style>
 </head>
 
 <body>
@@ -37,7 +43,7 @@
                 <div class="col-lg-12">
                     <div class="ibox">
                         <div class="ibox-title">
-                            <h5>통계 그래프 <label style="margin: 0; font-weight: 100;">(Sensor<%= sensorIndex; %>)</label></h5>
+                            <h5>통계 그래프 <label id="label-sensor" data-value="<%= sensorIndex %>">(Sensor<%= sensorIndex; %>)</label></h5>
                             <div class="ibox-tools">
                                 <a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
                             </div>
@@ -74,6 +80,7 @@
 <script>
     $(document).ready(() => {
 
+        const sensorId = $('#label-sensor').data("value");
         const userDetectionSerial = JSON.parse('<%- userDetectionSerial %>');       // 사용자 감지 이벤트 데이터 (echart 에서 사용할 수 있도록 가공된 데이터)
         const objectPickupSerial = JSON.parse('<%- objectPickupSerial %>');         // 물건 픽업 이벤트 데이터 (echart 에서 사용할 수 있도록 가공된 데이터)
         const xAxisData = ['0 Hour','1 Hour','2 Hour','3 Hour','4 Hour','5 Hour','6 Hour','7 Hour','8 Hour','9 Hour','10 Hour','11 Hour','12 Hour','13 Hour', '14 Hour','15 Hour','16 Hour','17 Hour','18 Hour','19 Hour','20 Hour','21 Hour','22 Hour','23 Hour'];
@@ -124,13 +131,13 @@
             $.ajax({
                 type: "POST",
                 url: "/choice/device",
-                data: "type=detect&id="+deviceId+"&sIndex=0",
+                data: "type=detect&id="+deviceId+"&index="+sensorId,
                 success: function(result) {
                     if (result) {
                         option.series = [{
                             name: "사용자 감지",
                             type: "line",
-                            data: result.upData
+                            data: result.udData
                         }, {
                             name: "물건 픽업",
                             type: "line",
