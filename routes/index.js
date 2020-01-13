@@ -77,6 +77,10 @@ router.post('/choice/device', async function(req, res) {
             const stayEventData = await getStayEventDataBySensor(sensorId);
             await res.json({result: true, stayEventData: stayEventData});
             break;
+        case "popup":                                                                                               // 단말의 팝업 표출 횟수를 시각화할 경우,
+            const popupCount = await getDisplayPopupCount(deviceList[CUR_POS].id);
+            await res.json({result: true, popupCount: popupCount});
+            break;
         case "setting":                                                                                             // 단말에 설정되어 있는 팝업 리스트를 가져옴
             const list = await getPopupList(deviceList[CUR_POS].id);
             await res.json({result: true, list: list});
@@ -296,8 +300,9 @@ async function getPickupEventDataByDevice(deviceId) {
  */
 async function getStayEventDataBySensor(sensorId) {
     const selectStayEventResult = await query.getStayEventBySensor(sensorId);           // 사용자가 센서 앞에서 얼마나 머물렀는지를 알 수 있는 Duration 값을 DB 에서 가져옴
-    if (selectStayEventResult.result) {
+    if (selectStayEventResult.result && selectStayEventResult.message.length > 0) {
         const convertedData = await convert.convertStayTimeArrayToTimeData(selectStayEventResult.message[0]);             // Duration Data 를 시각화하기 위해 이벤트 발생 시간을 기준으로 데이터 가공
+        console.log(convertedData);
         const resultDataList = [{
             name: selectStayEventResult.message[0].name,
             data: convertedData

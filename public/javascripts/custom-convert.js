@@ -54,19 +54,24 @@ module.exports = {
         let timeList = [], stayTimeList = [];
         if (sensorData.times !== null) {
             timeList = sensorData.times.split(',');
-        }
-        if (sensorData.stayTime !== null) {
-            stayTimeList =sensorData.stayTime.split(',');
-        }
 
-        const dataSize = timeList.length;
-        for (let i=0; i<dataSize; i++) {
-            const hour = new Date(timeList[i]).getHours();
-            if (Number(stayTimeList[i]) !== 0) {
-                timeFlow[hour].push(stayTimeList[i]);
+            if (sensorData.stayTime !== null) {
+                stayTimeList =sensorData.stayTime.split(',');
             }
+
+            const dataSize = timeList.length;
+            for (let i=0; i<dataSize; i++) {
+                const hour = new Date(timeList[i]).getHours();
+                if (Number(stayTimeList[i]) !== 0) {
+                    timeFlow[hour].push(stayTimeList[i]);
+                }
+            }
+            return timeFlow;
+        } else {
+            return timeFlow.map(function() {
+                return ['0'];
+            });
         }
-        return timeFlow;
     },
 
 };

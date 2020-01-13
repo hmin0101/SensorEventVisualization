@@ -171,13 +171,13 @@
             $.ajax({
                 type: "POST",
                 url: "/choice/device",
-                data: "type=popup&id="+deviceId+"&sIndex=0",
+                data: "type=popup&id="+deviceId,
                 success: function(result) {
                     if (result) {
                         option.series = [{
                             name:'광고 횟수',
                             type:'line',
-                            data: result.adCount,
+                            data: result.popupCount,
                         }];
                         chart.setOption(option);
                     } else {

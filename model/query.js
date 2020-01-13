@@ -81,7 +81,7 @@ module.exports = {
     getStayEventBySensor: async function(sensorId) {
         try {
             const selectStayTimeQ = 'select a.name, group_concat(b.time) as times, group_concat(c.duration) as stayTime from sensors as a ' +
-                'left join user_detection as b on a.sensors_id=b.sensors_id inner join user_detection_duration as c on b.user_detection_id=c.user_detection_id where a.sensors_id='+sensorId+' group by a.sensors_id;';
+                'left join user_detection as b on a.sensors_id=b.sensors_id left join user_detection_duration as c on b.user_detection_id=c.user_detection_id where a.sensors_id='+sensorId+' group by a.sensors_id;';
             return await db.asyncSelect(selectStayTimeQ);
         } catch (err) {
             return err;
