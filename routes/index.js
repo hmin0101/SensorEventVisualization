@@ -60,6 +60,11 @@ router.post('/choice/device', async function(req, res) {
     }
 
     switch (type) {
+        case "detect":
+            const udData = await getAccessEventDataByDevice(deviceList[CUR_POS].id);
+            const opData = await getPickupEventDataByDevice(deviceList[CUR_POS].id);
+            await res.json({result: true, udData: udData, opData: opData});
+            break;
         case "access":
             const accessEventData = await getAccessEventDataByDevice(deviceList[CUR_POS].id);
             await res.json({result: true, accessEventData: accessEventData});
@@ -157,6 +162,44 @@ router.get('/advertise', async function(req, res) {
     const adOption = await getAdvertisementCount(deviceList[CUR_POS].id);                                     // DB에서 시간대별 이벤트 표출 횟수를 가져와 echart에서 사용할 수 있도록 가공
     res.render('advertise', {currentMenu: "advertise", deviceList: deviceList, pos: CUR_POS, advertisementSerial: JSON.stringify(adOption)});           // echart 에서 사용할 가공한 데이터를 파라미터로 넘겨줌 ( advertise.ejs 를 표출)
 });
+
+/* 센서별 ACCESS EVENT 데이터 */
+async function getAccessEventDataBySensor(SensorId) {
+    const selectAccessEventResult = await query.getUserDetectionBySensor(SensorId);
+    if (selectAccessEventResult.result) {
+        const sensorListInDevice = selectAccessEventResult.message.map(function(elem) {
+            return {
+                sensorId: elem.sensors_id,
+                name: elem.name,
+                times: elem.times
+            }
+        });
+
+        const resultDataList = [];
+        for (const sensorData of sensorListInDevice) {
+            if (sensorData.times === null) {
+                const result = await convert.convertArrayToTimeData([]);
+
+                resultDataList.push({
+                    name: sensorData.name,
+                    data: result
+                });
+            } else {
+                const timeList = sensorData.times.split(",");
+                const result = await convert.convertArrayToTimeData(timeList);
+
+                resultDataList.push({
+                    name: sensorData.name,
+                    data: result
+                });
+            }
+        }
+
+        return await convert.convertDataToChartData(resultDataList, "line");
+    } else {
+        return [];
+    }
+}
 
 /* 단말별 ACCESS EVENT 데이터 */
 async function getAccessEventDataByDevice(deviceId) {

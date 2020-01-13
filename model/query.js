@@ -22,6 +22,17 @@ module.exports = {
         }
     },
 
+    /* 센서 기준 User Event */
+    getUserDetectionBySensor: async function(sensorsId) {
+        try {
+            const selectQ = 'select user_detection_id, time from user_detection where sensors_id='+sensorsId+';';
+            return await db.asyncSelect(selectQ);
+        } catch (err) {
+            return err;
+        }
+    },
+
+    /* 단말 기준 Access Event (센서 4개의 데이터) */
     getUserDetectionByDevice: async function(deviceId) {
         try {
             const sensorSelectQ = 'select group_concat(b.sensors_id) as sensors from device as a inner join sensors as b on a.device_id=b.device_id where a.device_id='+deviceId+';';
@@ -34,15 +45,6 @@ module.exports = {
             } else {
                 return {result: false, message: []};
             }
-        } catch (err) {
-            return err;
-        }
-    },
-
-    getUserDetectionBySensor: async function(sensorsId) {
-        try {
-            const selectQ = 'select user_detection_id, time from user_detection where sensors_id='+sensorsId+';';
-            return await db.asyncSelect(selectQ);
         } catch (err) {
             return err;
         }
