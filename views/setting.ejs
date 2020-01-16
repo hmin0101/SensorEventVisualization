@@ -280,9 +280,10 @@
                                     <div class="ibox-tools">
                                         <a id="btn-create"><i class="fa fa-plus"></i></a>
                                         <a id="btn-delete"><i class="fa fa-trash"></i></a>
-                                        <!--<a id="btn-upload"><i class="fa fa-upload"></i></a>-->
-                                        <!--<a id="btn-download"><i class="fa fa-download"></i></a>-->
+                                        <a id="btn-upload"><i class="fa fa-upload"></i></a>
+                                        <a id="btn-download"><i class="fa fa-download"></i></a>
                                         <a id="btn-send"><i class="fa fa-send"></i></a>
+                                        <input type="file" id="input-file" class="hidden" />
                                     </div>
                                 </div>
                                 <div class="ibox-content no-padding">
@@ -348,7 +349,7 @@
     $(document).ready(() => {
 
         let currentSettingId = null;
-        const groupList = [];
+        let groupList = [];
 
         const ft = FooTable.init("#table-popupList", {
             pagination: {
@@ -588,6 +589,9 @@
             const index = $('#select-group').val();
             $('.arrange-row[data-id='+index+']').parent().remove();
             groupList.splice(index, 1);
+
+            $('#select-group option[value='+index+']').remove();
+
             $('#modal-c').modal("hide");
         });
 
@@ -620,59 +624,153 @@
 
         // 단말의 배치 및 설정을 이벤트 서버로 전송
         $('#btn-send').on('click', function(e) {
-            const setting = {
-                arrange: [],
-                mapping: {}
-            }
-
-            // 각 그룹별 단말 배치를 객체에 저장
-            $('.arrange-area .arrange-row').each(function() {
-                let groupIndex = 0;
-                let priority = 1;
-                const row = [];
-                $(this).find('.sub-item').each(function() {
-                    const id = $(this).data('id');
-                    const name = $(this).find('.device-name').text();
-
-                    row.push(name);                                                                             // 그룹별 단말 배치를 저장
-
-                    const sensor = $(this).find('#mapping-sensor').text();
-                    let type = $(this).find('#mapping-type').text();
-                    let channel = "0ch";
-                    if (type !== "IR") {
-                        const split = type.split(':');
-                        type = split[0];
-                        channel = split[1];
-                    }
-
-                    setting.mapping[name] = {
-                        priority: priority,
-                        id: id,
-                        name: name,
-                        sensor: sensor,
-                        type: type,
-                        channel: channel,
-                    }
-                    priority++;
-                });
-
-                if (row.length > 0) {
-                    setting.arrange.push(row);                                                                  // 각 그룹별 배치를 저장
-                }
+            const setting = createArrangeObject();
+            $.ajax({
+                type: "POST",
+                url: "http://192.168.0.14:9000/setting/arrange/device",
+                data: "setting="+JSON.stringify(setting),
+                // success: function(result) {
+                //     alert(result);
+                // }
             });
+        });
 
-            console.log(setting);
-            // $.ajax({
-            //     type: "POST",
-            //     url: "http://192.168.0.14:9000/setting/arrange/device",
-            //     data: "setting="+JSON.stringify(setting),
-            //     // success: function(result) {
-            //     //     alert(result);
-            //     // }
-            // });
+        // Download
+        $('#btn-download').on('click', function(e) {
+            const setting = createArrangeObject();
+            const objString = JSON.stringify(setting);
+            download("arrangeSetting.json", objString);
+        });
+
+        // Upload
+        $('#btn-upload').on('click', function(e) {
+            $('#input-file').click();
+        });
+
+        // Upload
+        $('#input-file').on('change', function(e) {
+            const file = $('#input-file')[0].files[0];
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const data = JSON.parse(event.target.result);
+
+                if (data.arrange === undefined || data.mapping === undefined) {
+                    alert("잘못된 형식입니다.");
+                } else {
+                    groupList = [];
+                    let index = 0;
+                    $('.arrange-area').empty();
+                    for (const group of data.arrange) {
+                        const gn = "Group"+(index + 1);
+                        groupList.push({name: gn, items: []});
+                        $('.arrange-area').append('<div class="form-group m-b-md"><h5 class="no-margins">Group '+(index + 1)+'</h5><div class="arrange-row" data-id='+index+'></div></div>');
+                        for (const device of group) {
+                            groupList[index].items.push(device);
+                            createItem(index, data.mapping[device]);
+                        }
+                        index++;
+                    }
+
+                    $('#select-group').empty();
+                    index = 0;
+                    for (const group of groupList) {
+                        $('#select-group').append('<option value='+index+'>'+group.name+'</option>');
+                        index++;
+                    }
+                }
+            }
+            reader.readAsText(file);
         });
 
     });
+
+    function createItem(index, option) {
+        $('.arrange-row[data-id='+index+']').append(
+            '<div class="sub-item" data-id="'+option.id+'">' +
+            '<a class="btn-item-delete" data-id="'+option.id+'"><i class="fa fa-times"></i></a>' +
+            '<div style="padding: 0 10px;">' +
+            '<div class="form-draggable" data-id="'+option.id+'">' +
+            '<h5 class="device-name">'+option.name+'</h5>' +
+            '<div class="input-group">' +
+            '<button data-toggle="dropdown" class="btn btn-white btn-sm dropdown-toggle" type="button" id="mapping-sensor">'+option.sensor+'</button>' +
+            '<ul class="dropdown-menu">' +
+            '<li><a>Sensor1</a></li>' +
+            '<li><a>Sensor2</a></li>' +
+            '<li><a>Sensor3</a></li>' +
+            '<li><a>Sensor4</a></li>' +
+            '</ul>' +
+            '</div>\n' +
+            '<div class="input-group">\n' +
+            '<button data-toggle="dropdown" class="btn btn-white btn-sm dropdown-toggle" type="button" id="mapping-type">'+(option.type === "IR2" ? (option.type+':'+option.channel) : option.type)+'</button>' +
+            '<ul class="dropdown-menu">' +
+            '<li><a>IR</a></li>' +
+            '<li><a>IR2:0ch</a></li>' +
+            '<li><a>IR2:1ch</a></li>' +
+            '<li><a>IR2:2ch</a></li>' +
+            '<li><a>IR2:3ch</a></li>' +
+            '</ul>' +
+            '</div>' +
+            '</div>' +
+            '</div>' +
+            '<div>'
+        );
+    }
+
+    // 파일 다운로드
+    function download(filename, text) {
+        const element = document.createElement('a');
+        element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+        element.setAttribute('download', filename);
+
+        element.style.display = 'none';
+        document.body.appendChild(element);
+
+        element.click();
+
+        document.body.removeChild(element);
+    }
+
+    // 배치 설정 저장 객체 생성
+    function createArrangeObject() {
+        const setting = {
+            arrange: [],
+            mapping: {}
+        }
+
+        // 각 그룹별 단말 배치를 객체에 저장
+        $('.arrange-area .arrange-row').each(function() {
+            const row = [];
+            $(this).find('.sub-item').each(function() {
+                const id = $(this).data('id');
+                const name = $(this).find('.device-name').text();
+
+                row.push(name);                                                                             // 그룹별 단말 배치를 저장
+
+                const sensor = $(this).find('#mapping-sensor').text();
+                let type = $(this).find('#mapping-type').text();
+                let channel = "0ch";
+                if (type !== "IR") {
+                    const split = type.split(':');
+                    type = split[0];
+                    channel = split[1];
+                }
+
+                setting.mapping[name] = {
+                    id: id,
+                    name: name,
+                    sensor: sensor,
+                    type: type,
+                    channel: channel,
+                }
+            });
+
+            if (row.length > 0) {
+                setting.arrange.push(row);                                                                  // 각 그룹별 배치를 저장
+            }
+        });
+
+        return setting;
+    }
 
     function blankCheck(value) {
         if (value === "" || value === null) {
