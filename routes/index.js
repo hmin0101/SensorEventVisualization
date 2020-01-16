@@ -45,100 +45,136 @@ router.get('/', function(req, res, next) {
   res.redirect('/sensor/1');
 });
 
+router.get('/error', function(req, res) {
+    res.render('error', {message: "데이터베이스에 저장되어 있는 데이터가 없습니다.", error: {status: "Error Code : 500", stack: "Not Found Data In Database"}});
+});
+
 /* 단말을 변경하게 되면 해당 단말에 연결된 센서들의 이벤트 데이터를 데이터베이트로부터 읽어와 현재 보여줄 데이터의 유형에 맞춰 그래프에 사용하기 위한 데이터로 변환 */
 router.post('/choice/device', async function(req, res) {
     const type = req.body.type;
     const deviceId = req.body.id;
 
-    let index = 0;
-    for (const device of deviceList) {
-        if (Number(deviceId) === Number(device.id))
-            CUR_POS = index;
-        index++;
-    }
+    if (deviceList.length > 0) {
+        let index = 0;
+        for (const device of deviceList) {
+            if (Number(deviceId) === Number(device.id))
+                CUR_POS = index;
+            index++;
+        }
 
-    switch (type) {
-        case "detect":                                                                                              // 단말에 연결된 센서당 이벤트 발생 빈도를 확인할 경우,
-            const sensorIndex = req.body.index;
-            const udData = await getAccessEventDataBySensor(deviceList[CUR_POS].sensors[sensorIndex - 1].id);
-            const opData = await getPickupEventDataBySensor(deviceList[CUR_POS].sensors[sensorIndex - 1].id);
-            await res.json({result: true, udData: udData, opData: opData});
-            break;
-        case "access":                                                                                              // 단말의 시간대별 ACCESS EVENT 발생 빈도를 시각화할 경우,
-            const accessEventData = await getAccessEventDataByDevice(deviceList[CUR_POS].id);
-            await res.json({result: true, accessEventData: accessEventData});
-            break;
-        case "pickup":                                                                                              // 단말의 시간대별 PICKUP EVENT 발생 빈도를 시각화할 경우,
-            const pickupEventData = await getPickupEventDataByDevice(deviceList[CUR_POS].id);
-            await res.json({result: true, pickupEventData: pickupEventData});
-            break;
-        case "stay":                                                                                                // 단말의 시간대별 STAY TIME 을 시각화 할 경우,
-            const sensorId = req.body.sensorId;
-            const stayEventData = await getStayEventDataBySensor(sensorId);
-            await res.json({result: true, stayEventData: stayEventData});
-            break;
-        case "popup":                                                                                               // 단말의 팝업 표출 횟수를 시각화할 경우,
-            const popupCount = await getDisplayPopupCount(deviceList[CUR_POS].id);
-            await res.json({result: true, popupCount: popupCount});
-            break;
-        case "setting":                                                                                             // 단말에 설정되어 있는 팝업 리스트를 가져옴
-            const list = await getPopupList(deviceList[CUR_POS].id);
-            await res.json({result: true, list: list});
-            break;
-        default:                                                                                                    // 일치하는 TYPE 이 없을 경우,
-            await res.json({result: false, message: "Type Error"});
-            break;
+        switch (type) {
+            case "detect":                                                                                              // 단말에 연결된 센서당 이벤트 발생 빈도를 확인할 경우,
+                const sensorIndex = req.body.index;
+                const udData = await getAccessEventDataBySensor(deviceList[CUR_POS].sensors[sensorIndex - 1].id);
+                const opData = await getPickupEventDataBySensor(deviceList[CUR_POS].sensors[sensorIndex - 1].id);
+                await res.json({result: true, udData: udData, opData: opData});
+                break;
+            case "access":                                                                                              // 단말의 시간대별 ACCESS EVENT 발생 빈도를 시각화할 경우,
+                const accessEventData = await getAccessEventDataByDevice(deviceList[CUR_POS].id);
+                await res.json({result: true, accessEventData: accessEventData});
+                break;
+            case "pickup":                                                                                              // 단말의 시간대별 PICKUP EVENT 발생 빈도를 시각화할 경우,
+                const pickupEventData = await getPickupEventDataByDevice(deviceList[CUR_POS].id);
+                await res.json({result: true, pickupEventData: pickupEventData});
+                break;
+            case "stay":                                                                                                // 단말의 시간대별 STAY TIME 을 시각화 할 경우,
+                const sensorId = req.body.sensorId;
+                const stayEventData = await getStayEventDataBySensor(sensorId);
+                await res.json({result: true, stayEventData: stayEventData});
+                break;
+            case "popup":                                                                                               // 단말의 팝업 표출 횟수를 시각화할 경우,
+                const popupCount = await getDisplayPopupCount(deviceList[CUR_POS].id);
+                await res.json({result: true, popupCount: popupCount});
+                break;
+            case "setting":                                                                                             // 단말에 설정되어 있는 팝업 리스트를 가져옴
+                const list = await getPopupList(deviceList[CUR_POS].id);
+                await res.json({result: true, list: list});
+                break;
+            default:                                                                                                    // 일치하는 TYPE 이 없을 경우,
+                await res.json({result: false, message: "Type Error"});
+                break;
+        }
+    } else {
+        await res.json({result: false, message: "Not Found Device"});
     }
 });
 
 /* 디바이스의 각 센서당 이벤트 데이터 시각화하기 위한 API */
 router.get('/sensor/:id', async function(req, res) {
-    const sensorIndex = Number(req.params.id);
-    const udOption = await getAccessEventDataBySensor(deviceList[CUR_POS].sensors[sensorIndex - 1].id);         // Sensor 에 대한 사용자 감지 이벤트를 가져오고 Chart 에서 사용할 수 있도록 처리
-    const opOption = await getPickupEventDataBySensor(deviceList[CUR_POS].sensors[sensorIndex - 1].id);          // Sensor 에 대한 물건 픽업 이벤트를 가져오고 Chart 에서 사용할 수 있도록 처리
-    res.render('event-by-sensor', {currentMenu: "detail", sensorIndex: sensorIndex, deviceList: deviceList, pos: CUR_POS, userDetectionSerial: JSON.stringify(udOption), objectPickupSerial: JSON.stringify(opOption)});    // Sensor 에 각 이벤트 데이터를 파라미터로 넘겨줌 ( m1.ejs 를 표출 )
+    if (deviceList.length > 0) {
+        const sensorIndex = Number(req.params.id);
+        const udOption = await getAccessEventDataBySensor(deviceList[CUR_POS].sensors[sensorIndex - 1].id);
+        const opOption = await getPickupEventDataBySensor(deviceList[CUR_POS].sensors[sensorIndex - 1].id);
+        res.render('event-by-sensor', {currentMenu: "detail", sensorIndex: sensorIndex, deviceList: deviceList, pos: CUR_POS, userDetectionSerial: JSON.stringify(udOption), objectPickupSerial: JSON.stringify(opOption)});
+    } else {
+        res.redirect('/error');
+    }
 });
 
 /* 단말을 변경하였을 경우, 단말에 연결된 센서 목록을 가져오기 위한 API */
 router.post('/sensor/list', function(req, res) {
-    const deviceId = req.body.deviceId;
+    if (deviceList.length > 0) {
+        const deviceId = req.body.deviceId;
 
-    let sensorList = [];
-    for (const device of deviceList) {
-        if (Number(device.id) === Number(deviceId)) {
-            sensorList = device.sensors;
+        let sensorList = [];
+        for (const device of deviceList) {
+            if (Number(device.id) === Number(deviceId)) {
+                sensorList = device.sensors;
+            }
         }
+        res.json({result: true, sensorList: sensorList});
+    } else {
+        res.json({result: false, sensorList: []});
     }
-    res.json({result: true, sensorList: sensorList});
 });
 
 /* 현재 선택한 단말의 ACCESS_EVENT 시각화 API */
 router.get('/event/access', async function(req, res) {
-    const accessEventData = await getAccessEventDataByDevice(deviceList[CUR_POS].id);
-    res.render('event_access', {currentMenu: "access", deviceList: deviceList, pos: CUR_POS, accessEventData: JSON.stringify(accessEventData)});
+    if (deviceList.length > 0) {
+        const accessEventData = await getAccessEventDataByDevice(deviceList[CUR_POS].id);
+        res.render('event_access', {currentMenu: "access", deviceList: deviceList, pos: CUR_POS, accessEventData: JSON.stringify(accessEventData)});
+    } else {
+        res.redirect('/error');
+    }
 });
 
 /* 현재 선택한 단말의 PICKUP_EVENT 시각화 API */
 router.get('/event/pickup', async function(req, res) {
-    const pickupEventData = await getPickupEventDataByDevice(deviceList[CUR_POS].id);
-    res.render('event_pickup', {currentMenu: "pickup", deviceList: deviceList, pos: CUR_POS, pickupEventData: JSON.stringify(pickupEventData)});
+    if (deviceList.length > 0) {
+        const pickupEventData = await getPickupEventDataByDevice(deviceList[CUR_POS].id);
+        res.render('event_pickup', {currentMenu: "pickup", deviceList: deviceList, pos: CUR_POS, pickupEventData: JSON.stringify(pickupEventData)});
+    } else {
+        res.redirect('/error');
+    }
 });
 
 /* 현재 선택한 단말의 STAY_EVENT 시각화 API */
 router.get('/event/stay', async function(req, res) {
-    const stayEventData = await getStayEventDataBySensor(deviceList[CUR_POS].sensors[0].id);
-    res.render('event_stay', {currentMenu: "stay", deviceList: deviceList, pos: CUR_POS, stayEventData: JSON.stringify(stayEventData)});
+    if (deviceList.length > 0) {
+        const stayEventData = await getStayEventDataBySensor(deviceList[CUR_POS].sensors[0].id);
+        res.render('event_stay', {currentMenu: "stay", deviceList: deviceList, pos: CUR_POS, stayEventData: JSON.stringify(stayEventData)});
+    } else {
+        res.redirect('/error');
+    }
 });
 
 /* 현재 선택한 단말의 시간대별 이벤트 팝업 표출 횟수 시각화 API */
 router.get('/advertise', async function(req, res) {
-    const adOption = await getDisplayPopupCount(deviceList[CUR_POS].id);
-    res.render('advertise', {currentMenu: "advertise", deviceList: deviceList, pos: CUR_POS, advertisementSerial: JSON.stringify(adOption)});
+    if (deviceList.length > 0) {
+        const adOption = await getDisplayPopupCount(deviceList[CUR_POS].id);
+        res.render('advertise', {currentMenu: "advertise", deviceList: deviceList, pos: CUR_POS, advertisementSerial: JSON.stringify(adOption)});
+    } else {
+        res.redirect('/error');
+    }
 });
 
 /* SETTING PAGE */
 router.get('/setting', async function(req, res) {
-    res.render('setting', {currentMenu: "setting", deviceList: deviceList, pos: CUR_POS});    // Sensor 에 각 이벤트 데이터를 파라미터로 넘겨줌 ( m1.ejs 를 표출 )
+    if (deviceList.length > 0) {
+        res.render('setting', {currentMenu: "setting", deviceList: deviceList, pos: CUR_POS});    // Sensor 에 각 이벤트 데이터를 파라미터로 넘겨줌 ( m1.ejs 를 표출 )
+    } else {
+        res.redirect('/error');
+    }
 });
 
 /* 현재 선택한 단말에 설정되어 있는 팝업 리스트를 가져오기 위한 API */

@@ -70,13 +70,63 @@
             font-size: 12px;
         }
 
-        .arrange-area {
-            display: flex;
-            padding: 20px 10px;
+        .form-list {
+            padding: 10px 20px 0 20px;
         }
-        .arrange-area .sub-item {
+        #device-list {
+            display: flex;
+            padding-bottom: 10px;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+        }
+        #device-list .list-item {
+            flex: 0 0 auto;
+            margin: 0 5px;
+            padding: 3px 10px;
             border: 1px solid #e7eaec;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        #device-list .list-item:first-child {
+            margin-left: 0;
+        }
+        #device-list .list-item:last-child {
+            margin-right: 0;
+        }
+        #device-list::-webkit-scrollbar {
+            height: 5px;
+            background-color: #e7eaec;
+        }
+        #device-list::-webkit-scrollbar-thumb {
+            border-radius: 3px;
+            background-color: #1AB394;
+        }
+
+        .arrange-area {
+            flex-wrap: wrap;
+            padding: 10px 20px 20px 20px;
+        }
+        .arrange-area .form-group:last-child {
+            margin-bottom: 0;
+        }
+        .arrange-area .arrange-row {
+            display: flex;
+            padding: 15px 10px;
+            margin-top: 5px;
+            border: 1px solid #e7eaec;
+            border-radius: 3px;
+        }
+        .arrange-area .arrange-row:first-child {
+            margin-top: 0;
+        }
+        .arrange-area .arrange-row:last-child {
+            margin-bottom: 0;
+        }
+        .arrange-row .sub-item {
+            /*border: 1px solid #e7eaec;*/
+            position: relative;
             flex: 1;
+            max-width: 10%;
             margin: 0 10px;
             padding: 13px;
             text-align: center;
@@ -94,6 +144,17 @@
             font-size: 9px;
             font-weight: 100;
             padding: 3px 6px;
+        }
+        .sub-item .btn-item-delete {
+            position: absolute;
+            top: 4px;
+            right: 10px;
+        }
+        .btn-item-delete {
+            color: #999c9e;
+        }
+        .btn-item-delete:hover {
+            color: #666c6e;
         }
     </style>
 </head>
@@ -215,45 +276,52 @@
                         <div class="col-lg-12">
                             <div class="ibox">
                                 <div class="ibox-title">
-                                    <h5>센서 배치 순서</h5>
+                                    <h5>단말 배치 순서</h5>
                                     <div class="ibox-tools">
-                                        <a id="btn-save"><i class="fa fa-save"></i></a>
+                                        <a id="btn-create"><i class="fa fa-plus"></i></a>
+                                        <a id="btn-delete"><i class="fa fa-trash"></i></a>
+                                        <!--<a id="btn-upload"><i class="fa fa-upload"></i></a>-->
+                                        <!--<a id="btn-download"><i class="fa fa-download"></i></a>-->
+                                        <a id="btn-send"><i class="fa fa-send"></i></a>
                                     </div>
                                 </div>
                                 <div class="ibox-content no-padding">
-                                    <div class="arrange-area">
-                                        <% for (const elem of deviceList) { %>
-                                            <div class="sub-item">
-                                                <div class="form-draggable">
-                                                    <h5 class="device-name" data-id="<%= elem.id %>"><%= elem.name %></h5>
-                                                    <div>
-                                                        <div class="input-group m-r-xs">
-                                                            <button data-toggle="dropdown" class="btn btn-white btn-sm dropdown-toggle" type="button" id="mapping-sensor">Sensor1</button>
-                                                            <ul class="dropdown-menu">
-                                                                <li><a>Sensor1</a></li>
-                                                                <li><a>Sensor2</a></li>
-                                                                <li><a>Sensor3</a></li>
-                                                                <li><a>Sensor4</a></li>
-                                                            </ul>
-                                                        </div>
-                                                        <div class="input-group m-l-xs">
-                                                            <button data-toggle="dropdown" class="btn btn-white btn-sm dropdown-toggle" type="button" id="mapping-type">IR</button>
-                                                            <ul class="dropdown-menu">
-                                                                <li><a>IR</a></li>
-                                                                <li><a>IR2:0ch</a></li>
-                                                                <li><a>IR2:1ch</a></li>
-                                                                <li><a>IR2:2ch</a></li>
-                                                                <li><a>IR2:3ch</a></li>
-                                                            </ul>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        <% } %>
+                                    <div class="form-list">
+                                        <h5>Device List</h5>
+                                        <div id="device-list">
+                                            <% for (const elem of deviceList) { %>
+                                                <span class="list-item" data-id="<%= elem.id %>"><%= elem.name %></span>
+                                            <% } %>
+                                        </div>
                                     </div>
+                                    <div class="hr-line-dashed-sm"></div>
+                                    <div class="arrange-area"></div>
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal" id="modal-c" tabindex="-1" role="dialog"  aria-hidden="true">
+            <div class="modal-dialog modal-sm">
+                <div class="modal-content animated fadeIn">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                        <h3 class="modal-title">Arrange Device</h3>
+                        <small class="modal-subTitle">단말을 넣을 그룹을 선택하세요.</small>
+                    </div>
+                    <div class="modal-body">
+                        <label style="display: block; margin: 0 0 5px 0; font-size: 12px; font-weight: 200;" for="select-group">Group List</label>
+                        <select class="form-control" id="select-group">
+                            <option value="-1">그룹이 존재하지 않습니다.</option>
+                        </select>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-white" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" id="btn-input">Input</button>
+                        <button type="button" class="btn btn-warning" id="btn-remove">Remove</button>
                     </div>
                 </div>
             </div>
@@ -280,6 +348,7 @@
     $(document).ready(() => {
 
         let currentSettingId = null;
+        const groupList = [];
 
         const ft = FooTable.init("#table-popupList", {
             pagination: {
@@ -415,52 +484,192 @@
             });
         });
 
-        // Div 를 움직일 수 있게 됨
-        WinMove();
-
-        $('#btn-save').on('click', function(e) {
-            const setting = {
-                arrange: [],
-                mapping: {}
+        // 단말 배치 순서 - 단말 목록에서 단말을 선택하는 이벤트
+        let curSelectDevice = {};
+        $('#device-list .list-item').on('click', function(e) {
+            curSelectDevice = {
+                id: $(this).data('id'),
+                name: $(this).text()
             };
 
-            $('.arrange-area .form-draggable').each(function() {
-                const deviceName = $(this).find('.device-name').text();
-                const sensor = $(this).find('#mapping-sensor').text();
-                const type = $(this).find('#mapping-type').text();
+            $('#select-group option:eq(0)').prop('selected', true);
+            if (groupList.length > 0) {
+                $('#modal-c .modal-title').text("Arrange Device");
+                $('#modal-c .modal-subTitle').text("단말을 넣을 그룹을 선택하세요.");
+                $('#modal-c #btn-input').removeClass("hidden");
+                $('#modal-c #btn-remove').addClass("hidden");
+                $('#modal-c').modal("show");
+            } else {
+                alert("단말이 속할 그룹을 먼저 생성하세요.");
+            }
+        });
 
-                setting.arrange.push(deviceName);
+        // 그룹 생성
+        let rowIndex = 0;
+        $('#btn-create').on('click', function(e) {
+            $('.arrange-area').append('<div class="form-group m-b-md"><h5 class="no-margins">Group '+(rowIndex + 1)+'</h5><div class="arrange-row" data-id='+rowIndex+'></div></div>');
 
-                if (type !== "IR") {
-                    const split = type.split(':');
-                    setting.mapping[deviceName] = {
-                        sensor: sensor,
-                        type: split[0],
-                        channel: split[1]
-                    };
-                } else {
-                    setting.mapping[deviceName] = {
-                        sensor: sensor,
-                        type: type,
-                        channel: 0
-                    };
+            groupList.push({name: "Group"+(rowIndex + 1), items: []});
+            if (groupList.length === 1) {
+                $('#select-group').empty();
+            }
+            $('#select-group').append('<option value='+rowIndex+'>'+groupList[rowIndex].name+'</option>');
+
+            rowIndex++;
+        });
+
+        // 그룹에 단말을 추가
+        $('#modal-c #btn-input').on('click', function(e) {
+            const value = $('#select-group').val();
+
+            const items = groupList[value].items;
+            // 중복 체크
+            const isExist = items.some(function(elem) {
+                if (elem.name === curSelectDevice.name) return true;
+            });
+            if (isExist) {
+                alert("선택한 그룹에 동일한 단말이 존재합니다.");
+            } else {
+                groupList[value].items.push({id: curSelectDevice.id, name: curSelectDevice.name});
+
+                $('.arrange-row[data-id='+value+']').append(
+                    '<div class="sub-item" data-id="'+curSelectDevice.id+'">' +
+                    '<a class="btn-item-delete" data-id="'+curSelectDevice.id+'"><i class="fa fa-times"></i></a>' +
+                    '<div style="padding: 0 10px;">' +
+                    '<div class="form-draggable" data-id="'+curSelectDevice.id+'">' +
+                    '<h5 class="device-name">'+curSelectDevice.name+'</h5>' +
+                    '<div class="input-group">' +
+                    '<button data-toggle="dropdown" class="btn btn-white btn-sm dropdown-toggle" type="button" id="mapping-sensor">Sensor1</button>' +
+                    '<ul class="dropdown-menu">' +
+                    '<li><a>Sensor1</a></li>' +
+                    '<li><a>Sensor2</a></li>' +
+                    '<li><a>Sensor3</a></li>' +
+                    '<li><a>Sensor4</a></li>' +
+                    '</ul>' +
+                    '</div>\n' +
+                    '<div class="input-group">\n' +
+                    '<button data-toggle="dropdown" class="btn btn-white btn-sm dropdown-toggle" type="button" id="mapping-type">IR</button>' +
+                    '<ul class="dropdown-menu">' +
+                    '<li><a>IR</a></li>' +
+                    '<li><a>IR2:0ch</a></li>' +
+                    '<li><a>IR2:1ch</a></li>' +
+                    '<li><a>IR2:2ch</a></li>' +
+                    '<li><a>IR2:3ch</a></li>' +
+                    '</ul>' +
+                    '</div>' +
+                    '</div>' +
+                    '</div>' +
+                    '<div>'
+                );
+
+                $('#modal-c').modal('hide');
+            }
+
+            // Div 를 움직일 수 있게 됨
+            WinMove();
+        });
+
+        // 그룹 삭제 Modal 열기
+        $('#btn-delete').on('click', function(e) {
+            $('#select-group option:eq(0)').prop('selected', true);
+            if (groupList.length > 0) {
+                $('#modal-c .modal-title').text("Delete Group");
+                $('#modal-c .modal-subTitle').text("삭제할 그룹을 선택하세요.");
+                $('#modal-c #btn-input').addClass("hidden");
+                $('#modal-c #btn-remove').removeClass("hidden");
+                $('#modal-c').modal("show");
+            } else {
+                alert("단말이 속할 그룹을 먼저 생성하세요.");
+            }
+        });
+
+        // 그룹 삭제
+        $('#modal-c #btn-remove').on('click', function(e) {
+            const index = $('#select-group').val();
+            $('.arrange-row[data-id='+index+']').parent().remove();
+            groupList.splice(index, 1);
+            $('#modal-c').modal("hide");
+        });
+
+        // 배치한 단말 삭제
+        $(document).on('click', '.btn-item-delete', function() {
+            const id = $(this).data('id');
+            const item = $(this).parent();
+            const rowIndex = item.parent().data('id');
+            // Row 에서 Item 삭제
+            item.remove();
+            // GroupList 배열에 저장된 정보 삭제
+            let idx = null;
+            groupList[rowIndex].items.some(function(elem, index) {
+                if (elem.id === id) {
+                    idx = index;
                 }
             });
 
-            $.ajax({
-                type: "POST",
-                url: "http://192.168.0.14:9000/setting/arrange/device",
-                data: "setting="+JSON.stringify(setting),
-                // success: function(result) {
-                //     alert(result);
-                // }
-            });
+            if (idx !== null) {
+                groupList[rowIndex].items.splice(idx);
+            }
         });
 
-        $('.dropdown-menu li a').on('click', function(e) {
+        // 단말의 센서와 센서 Type 설정
+        $(document).on('click', '.dropdown-menu li > a', function(e) {
             const value = $(this).text();
             const form = $(this).parent().parent().parent();
             form.find('.dropdown-toggle').text(value);
+        });
+
+        // 단말의 배치 및 설정을 이벤트 서버로 전송
+        $('#btn-send').on('click', function(e) {
+            const setting = {
+                arrange: [],
+                mapping: {}
+            }
+
+            // 각 그룹별 단말 배치를 객체에 저장
+            $('.arrange-area .arrange-row').each(function() {
+                let groupIndex = 0;
+                let priority = 1;
+                const row = [];
+                $(this).find('.sub-item').each(function() {
+                    const id = $(this).data('id');
+                    const name = $(this).find('.device-name').text();
+
+                    row.push(name);                                                                             // 그룹별 단말 배치를 저장
+
+                    const sensor = $(this).find('#mapping-sensor').text();
+                    let type = $(this).find('#mapping-type').text();
+                    let channel = "0ch";
+                    if (type !== "IR") {
+                        const split = type.split(':');
+                        type = split[0];
+                        channel = split[1];
+                    }
+
+                    setting.mapping[name] = {
+                        priority: priority,
+                        id: id,
+                        name: name,
+                        sensor: sensor,
+                        type: type,
+                        channel: channel,
+                    }
+                    priority++;
+                });
+
+                if (row.length > 0) {
+                    setting.arrange.push(row);                                                                  // 각 그룹별 배치를 저장
+                }
+            });
+
+            console.log(setting);
+            // $.ajax({
+            //     type: "POST",
+            //     url: "http://192.168.0.14:9000/setting/arrange/device",
+            //     data: "setting="+JSON.stringify(setting),
+            //     // success: function(result) {
+            //     //     alert(result);
+            //     // }
+            // });
         });
 
     });
