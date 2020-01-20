@@ -111,6 +111,17 @@ module.exports = {
     /* 현재 선택한 단말에 대해 팝업 추가 */
     addPopupSetting: async function(deviceId, option) {
         try {
+            const selectQ = 'select group_concat(advertisement_setting_id) as ids from advertisement_setting where device_id='+deviceId+' and visible=1 group by device_id;';
+            const selectResult = await db.query(selectQ);
+            if (selectResult.result) {
+                const setting_id_lst = selectResult.message[0].ids;
+                const updateQ = 'update advertisement_setting set visible=0 where type="'+option.type+'" and advertisement_setting_id in ('+setting_id_lst+')';
+                const result = await db.query(updateQ);
+                if (!result.result) {
+                    return result;
+                }
+            }
+
             const insertQ = 'insert into advertisement_setting (device_id, type, advertisement_setting.key, url, x_axis, y_axis, width, height, duration, visible) value ' +
                 '('+deviceId+', "'+option.type+'", "'+option.name+'", "'+option.url+'", '+option.pos_x+', '+option.pos_y+', '+option.width+', '+option.height+', '+option.duration+', 1)';
             return await db.query(insertQ);

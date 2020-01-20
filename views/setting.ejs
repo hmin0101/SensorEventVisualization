@@ -209,9 +209,9 @@
                                             <div class="input-group">
                                                 <label class="form-subject" for="select-event">Sensor Type</label>
                                                 <select class="form-control" id="select-event">
-                                                    <option value="ir">IR Sensor</option>
-                                                    <option value="laser">Laser Sensor</option>
-                                                    <option value="ir2">IR2 Sensor</option>
+                                                    <option value="IR">IR Sensor</option>
+                                                    <option value="Laser">Laser Sensor</option>
+                                                    <option value="IR2">IR2 Sensor</option>
                                                 </select>
                                             </div>
                                         </div>
@@ -272,9 +272,37 @@
                             </div>
                         </div>
                     </div>
+<!--                    <div class="row">-->
+<!--                        <div class="col-lg-12">-->
+<!--                            <div class="ibox" id="form-sensitivity">-->
+<!--                                <div class="ibox-title">-->
+<!--                                    <h5>이벤트 감지 민감도 설정</h5>-->
+<!--                                    <div class="ibox-tools">-->
+<!--                                        <a id="btn-send"><i class="fa fa-send"></i></a>-->
+<!--                                    </div>-->
+<!--                                </div>-->
+<!--                                <div class="ibox-content">-->
+<!--                                    <div class="flex">-->
+<!--                                        <div class="flex-item-50">-->
+<!--                                            <div class="input-group">-->
+<!--                                                <small style="display: block; margin-bottom: 5px;">IR</small>-->
+<!--                                                <input class="form-control" id="input-sensitivity-ir" placeholder="Input IR Sensitivity (Default: 20)" />-->
+<!--                                            </div>-->
+<!--                                        </div>-->
+<!--                                        <div class="flex-item-50">-->
+<!--                                            <div class="input-group">-->
+<!--                                                <small style="display: block; margin-bottom: 5px;">Laser</small>-->
+<!--                                                <input class="form-control" id="input-sensitivity-laser" placeholder="Input IR Sensitivity (Default: 10)" />-->
+<!--                                            </div>-->
+<!--                                        </div>-->
+<!--                                    </div>-->
+<!--                                </div>-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                    </div>-->
                     <div class="row">
                         <div class="col-lg-12">
-                            <div class="ibox">
+                            <div class="ibox" id="form-arrange">
                                 <div class="ibox-title">
                                     <h5>단말 배치 순서</h5>
                                     <div class="ibox-tools">
@@ -408,9 +436,9 @@
             };
 
             if (blankCheck(option.pos_x)) option.pos_x = 0;
-            if (blankCheck(option.pos_y)) option.pos_x = 0;
-            if (blankCheck(option.width)) option.pos_x = 1200;
-            if (blankCheck(option.height)) option.pos_x = 1000;
+            if (blankCheck(option.pos_y)) option.pos_y = 0;
+            if (blankCheck(option.width)) option.width = 1200;
+            if (blankCheck(option.height)) option.height = 1000;
             if (blankCheck(option.duration)) option.duration = 2000;
             if (blankCheck(option.name)) {
                 alert("Setting Name을 입력해주세요.");
@@ -429,6 +457,12 @@
                                 });
                                 clearSettingInfo();
                                 alert("Setting 추가 완료");
+
+                                $.ajax({
+                                    type: "POST",
+                                    url: "http://192.168.0.14:9000/update/popup",
+                                    data: "device_id="+result.id
+                                });
                             } else {
                                 alert(result.message);
                             }
@@ -446,6 +480,12 @@
                                 });
                                 clearSettingInfo();
                                 alert("Setting 업데이트 완료");
+
+                                $.ajax({
+                                    type: "POST",
+                                    url: "http://192.168.0.14:9000/update/popup",
+                                    data: "device_id="+result.id
+                                });
                             } else {
                                 alert(result.message);
                             }
@@ -507,7 +547,7 @@
 
         // 그룹 생성
         let rowIndex = 0;
-        $('#btn-create').on('click', function(e) {
+        $('#form-arrange #btn-create').on('click', function(e) {
             $('.arrange-area').append('<div class="form-group m-b-md"><h5 class="no-margins">Group '+(rowIndex + 1)+'</h5><div class="arrange-row" data-id='+rowIndex+'></div></div>');
 
             groupList.push({name: "Group"+(rowIndex + 1), items: []});
@@ -571,7 +611,7 @@
         });
 
         // 그룹 삭제 Modal 열기
-        $('#btn-delete').on('click', function(e) {
+        $('#form-arrange #btn-delete').on('click', function(e) {
             $('#select-group option:eq(0)').prop('selected', true);
             if (groupList.length > 0) {
                 $('#modal-c .modal-title').text("Delete Group");
@@ -623,7 +663,7 @@
         });
 
         // 단말의 배치 및 설정을 이벤트 서버로 전송
-        $('#btn-send').on('click', function(e) {
+        $('#form-arrange #btn-send').on('click', function(e) {
             const setting = createArrangeObject();
             $.ajax({
                 type: "POST",
@@ -636,14 +676,14 @@
         });
 
         // Download
-        $('#btn-download').on('click', function(e) {
+        $('#form-arrange #btn-download').on('click', function(e) {
             const setting = createArrangeObject();
             const objString = JSON.stringify(setting);
             download("arrangeSetting.json", objString);
         });
 
         // Upload
-        $('#btn-upload').on('click', function(e) {
+        $('#form-arrange #btn-upload').on('click', function(e) {
             $('#input-file').click();
         });
 
@@ -681,6 +721,28 @@
             }
             reader.readAsText(file);
         });
+
+        // 민감도 설정
+        // $('#form-sensitivity #btn-send').on('click', function(e) {
+        //     const sensitivity = {
+        //         ir: blankCheck($('#input-sensitivity-ir').val()) ? 20 : $('#input-sensitivity-ir').val(),
+        //         laser: blankCheck($('#input-sensitivity-laser').val()) ? 10 : $('#input-sensitivity-laser').val()
+        //     }
+        //
+        //     if (sensitivity.ir < 0) {
+        //         alert("IR 민감도가 음수일 수 없습니다.");
+        //         $('#input-sensitivity-ir').focus();
+        //     } else if (sensitivity.laser < 0) {
+        //         alert("Laser 민감도가 음수일 수 없습니다.");
+        //         $('#input-sensitivity-laser').focus();
+        //     } else {
+        //         $.ajax({
+        //             type: "POST",
+        //             url: "http://192.168.0.14:9000/update/sensitivity",
+        //             data: "sensitivity="+sensitivity
+        //         });
+        //     }
+        // });
 
     });
 
