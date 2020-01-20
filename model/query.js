@@ -1,5 +1,13 @@
 const db = require('../db/db_query');
 
+const today = new Date();
+const tomorrow = new Date();
+tomorrow.setDate(today.getDate() + 1);
+
+const sDate = today.getFullYear() + "-" + (today.getMonth() < 10 ? "0" + today.getMonth() : today.getMonth()) + "-" + (today.getDate() < 10 ? "0" + today.getDate() : today.getDate());
+const eDate = tomorrow.getFullYear() + "-" + (tomorrow.getMonth() < 10 ? "0" + tomorrow.getMonth() : tomorrow.getMonth()) + "-" + (tomorrow.getDate() < 10 ? "0" + tomorrow.getDate() : tomorrow.getDate());
+
+
 module.exports = {
 
     /* DEVICE LIST */
@@ -26,6 +34,8 @@ module.exports = {
     getUserDetectionBySensor: async function(sensorsId) {
         try {
             const selectQ = 'select user_detection_id, time from user_detection where sensors_id='+sensorsId+';';
+            // 하루 단위로 데이터 확인
+            // const selectQ = 'select user_detection_id, time from user_detection where sensors_id='+sensorsId+' and time between date("'+sDate+'") and date("'+eDate+'");';
             return await db.asyncSelect(selectQ);
         } catch (err) {
             return err;
@@ -41,6 +51,8 @@ module.exports = {
                 const sensors = sensorSelectResult.message[0].sensors;
                 const detectionSelectQ = 'select a.sensors_id, a.name, group_concat(b.user_detection_id) as userDetectionList, group_concat(b.time) as times ' +
                     'from sensors as a inner join user_detection as b on a.sensors_id=b.sensors_id where a.sensors_id in ('+sensors+') group by a.sensors_id;';
+                // 하루 단위로 데이터를 확인
+                // const detectionSelectQ = 'select a.sensors_id, a.name, group_concat(b.user_detection_id) as userDetectionList, group_concat(b.time) as times from sensors as a inner join user_detection as b on a.sensors_id=b.sensors_id where a.sensors_id in ('+sensors+') and b.time between date("'+sDate+'") and date("'+eDate+'") group by a.sensors_id;';
                 return await db.asyncSelect(detectionSelectQ);
             } else {
                 return {result: false, message: []};
@@ -54,6 +66,8 @@ module.exports = {
     getObjectPickupBySensor: async function(sensorsId) {
         try {
             const selectQ = 'select object_pickup_id, time from object_pickup where sensors_id='+sensorsId+';';
+            // 하루 단위로 데이터 확인
+            // const selectQ = 'select object_pickup_id, time from object_pickup where sensors_id='+sensorsId+' and time between date("'+sDate+'") and date("'+eDate+'");';
             return await db.asyncSelect(selectQ);
         } catch (err) {
             return err;
@@ -67,7 +81,10 @@ module.exports = {
             const sensorSelectResult = await db.asyncSelect(sensorSelectQ);
             if (sensorSelectResult.result) {
                 const sensors = sensorSelectResult.message[0].sensors;
-                const detectionSelectQ = 'select a.sensors_id, a.name, group_concat(b.object_pickup_id) as objectPickupList, group_concat(b.time) as times from sensors as a left join object_pickup as b on a.sensors_id=b.sensors_id where a.sensors_id in ('+sensors+') group by a.sensors_id;';
+                const detectionSelectQ = 'select a.sensors_id, a.name, group_concat(b.object_pickup_id) as objectPickupList, group_concat(b.time) as times ' +
+                    'from sensors as a left join object_pickup as b on a.sensors_id=b.sensors_id where a.sensors_id in ('+sensors+') group by a.sensors_id;';
+                // 하루 단위로 데이터 확인
+                // const detectionSelectQ = 'select a.sensors_id, a.name, group_concat(b.object_pickup_id) as objectPickupList, group_concat(b.time) as times from sensors as a left join object_pickup as b on a.sensors_id=b.sensors_id where a.sensors_id in ('+sensors+') and b.time between date("'+sDate+'") and date("'+eDate+'") group by a.sensors_id;';
                 return await db.asyncSelect(detectionSelectQ);
             } else {
                 return {result: false, message: []};
@@ -82,6 +99,8 @@ module.exports = {
         try {
             const selectStayTimeQ = 'select a.name, group_concat(b.time) as times, group_concat(c.duration) as stayTime from sensors as a ' +
                 'left join user_detection as b on a.sensors_id=b.sensors_id left join user_detection_duration as c on b.user_detection_id=c.user_detection_id where a.sensors_id='+sensorId+' group by a.sensors_id;';
+            // 하루 단위로 데이터 확인
+            // const selectStayTimeQ = 'select a.name, group_concat(b.time) as times, group_concat(c.duration) as stayTime from sensors as a left join user_detection as b on a.sensors_id=b.sensors_id left join user_detection_duration as c on b.user_detection_id=c.user_detection_id where a.sensors_id='+sensorId+' and b.time between date("'+sDate+'") and date("'+eDate+'") group by a.sensors_id;';
             return await db.asyncSelect(selectStayTimeQ);
         } catch (err) {
             return err;
@@ -92,6 +111,8 @@ module.exports = {
     getDisplayPopupByDevice: async function(deviceId) {
         try {
             const selectQ = 'select * from advertisement where device_id='+deviceId+';';
+            // 하루 단위로 데이터 확인
+            // const selectQ = 'select * from advertisement where device_id='+deviceId+' and time between date("'+sDate+'") and date("'+eDate+'");';
             return await db.asyncSelect(selectQ);
         } catch (err) {
             return err;
