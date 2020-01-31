@@ -26,9 +26,21 @@
             flex: 25%;
             max-width: 25%;
         }
+        .flex-item-30 {
+            flex: 30%;
+            max-width: 30%;
+        }
+        .flex-item-40 {
+            flex: 40%;
+            max-width: 40%;
+        }
         .flex-item-50 {
             flex: 50%;
             max-width: 50%;
+        }
+        .flex-item-60 {
+            flex: 60%;
+            max-width: 60%;
         }
         .flex-item-75 {
             flex: 75%;
@@ -205,17 +217,29 @@
                                 </div>
                                 <div class="ibox-content">
                                     <div class="flex">
-                                        <div class="flex flex-item-25">
-                                            <div class="input-group">
-                                                <label class="form-subject" for="select-event">Sensor Type</label>
-                                                <select class="form-control" id="select-event">
-                                                    <option value="ir">IR Sensor</option>
-                                                    <option value="laser">Laser Sensor</option>
-                                                    <option value="ir2">IR2 Sensor</option>
-                                                </select>
+                                        <div class="flex flex-item-40 m-r-sm">
+                                            <div class="flex-item-50">
+                                                <div class="input-group">
+                                                    <label class="form-subject" for="select-sensor">Sensor Type</label>
+                                                    <select class="form-control" id="select-sensor">
+                                                        <% for (const sensor of deviceList[pos].sensors) { %>
+                                                            <option value="<%= sensor.id %>"><%= sensor.name %></option>
+                                                        <% } %>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="flex-item-50">
+                                                <div class="input-group">
+                                                    <label class="form-subject" for="select-event">Sensor Type</label>
+                                                    <select class="form-control" id="select-event">
+                                                        <option value="ir">IR Sensor</option>
+                                                        <option value="laser">Laser Sensor</option>
+                                                        <option value="ir2">IR2 Sensor</option>
+                                                    </select>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div class="flex flex-item-75">
+                                        <div class="flex flex-item-60 m-l-sm">
                                             <div class="flex-item-50">
                                                 <div class="input-group">
                                                     <label class="form-subject" for="input-name">Name</label>
@@ -359,7 +383,9 @@
             },
             columns: [
                 {name: "id", title: "", classes: "hidden"},
-                {name: "type", title: "Sensor Type", type: "string", classes: "enable-click"},
+                {name: "sensorsId", title: "", classes: "hidden"},
+                {name: "sensorName", title: "Sensor", type: "string", classes: "enable-click"},
+                {name: "type", title: "Type", type: "string", classes: "enable-click"},
                 {name: "name", title: "Name", classes: "enable-click"},
                 {name: "url", title: "", classes: "hidden"},
                 {name: "pos_x", title: "", classes: "hidden"},
@@ -374,13 +400,14 @@
         $(document).on('click', '.table .enable-click', function(e) {
             const row = FooTable.getRow(this).value;
 
+            currentSettingId = row.id;
             $('#select-event option').each(function(e) {
                 const type = $(this).val();
                 if (type === row.type) {
                     $(this).prop("selected", true);
                 }
             });
-            currentSettingId = row.id;
+            $('#select-sensor option[value="'+row.sensorsId+'"]').prop("selected", true);
             $('#input-name').val(row.name);
             $('#input-url').val(row.url);
             $('#input-x').val(row.pos_x);
@@ -397,6 +424,7 @@
         $('#btn-popup-setting').on('click', function(e) {
             const option = {
                 id: currentSettingId,
+                sensorsId: $('#select-sensor').val(),
                 type: $('#select-event').val(),
                 name: $('#input-name').val(),
                 url: $('#input-url').val(),
@@ -408,9 +436,9 @@
             };
 
             if (blankCheck(option.pos_x)) option.pos_x = 0;
-            if (blankCheck(option.pos_y)) option.pos_x = 0;
-            if (blankCheck(option.width)) option.pos_x = 1200;
-            if (blankCheck(option.height)) option.pos_x = 1000;
+            if (blankCheck(option.pos_y)) option.pos_y = 0;
+            if (blankCheck(option.width)) option.width = 1200;
+            if (blankCheck(option.height)) option.height = 1000;
             if (blankCheck(option.duration)) option.duration = 2000;
             if (blankCheck(option.name)) {
                 alert("Setting Name을 입력해주세요.");
@@ -457,6 +485,7 @@
 
         function clearSettingInfo() {
             currentSettingId = null;
+            $('#select-sensor option:eq(0)').prop('selected', true);
             $('#select-event option:eq(0)').prop('selected', true);
             $('#input-name').val("");
             $('#input-url').val("");
@@ -470,6 +499,22 @@
         // Select Device
         $('#select-device').on("change", function(e) {
             const deviceId = $(this).val();
+
+            $.ajax({
+                type: "POST",
+                url: "/sensor/list",
+                data: "deviceId="+deviceId,
+                success: function(result) {
+                    if (result.result && result.sensorList.length > 0) {
+                        $('#select-sensor').empty();
+                        for (const sensor of result.sensorList) {
+                            $('#select-sensor').append('<option value="'+sensor.id+'">'+sensor.name+'</option>');
+                        }
+                    } else {
+                        alert("Select Sensor Error!");
+                    }
+                }
+            });
 
             $.ajax({
                 type: "POST",

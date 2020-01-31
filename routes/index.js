@@ -171,7 +171,7 @@ router.get('/advertise', async function(req, res) {
 /* SETTING PAGE */
 router.get('/setting', async function(req, res) {
     if (deviceList.length > 0) {
-        res.render('setting', {currentMenu: "setting", deviceList: deviceList, pos: CUR_POS});    // Sensor 에 각 이벤트 데이터를 파라미터로 넘겨줌 ( m1.ejs 를 표출 )
+        res.render('setting', {currentMenu: "setting", deviceList: deviceList, pos: CUR_POS});
     } else {
         res.redirect('/error');
     }
@@ -378,9 +378,12 @@ async function getDisplayPopupCount(deviceId) {
 async function getPopupList(deviceId) {
     const result = await query.getPopupSettingList(deviceId);
     if (result.result) {
+        console.log(result.message);
         return await result.message.map(function(elem) {
             return {
                 id: elem.advertisement_setting_id,
+                sensorsId: elem.sensors_id,
+                sensorName: elem.sensorName,
                 name: elem.key,
                 url: elem.url,
                 pos_x: elem.x_axis,

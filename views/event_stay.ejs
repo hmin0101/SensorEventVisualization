@@ -146,7 +146,6 @@
                 url: "/sensor/list",
                 data: "deviceId="+currentDeviceId,
                 success: function(result) {
-                    console.log(result);
                     if (result.result && result.sensorList.length > 0) {
                         $.ajax({
                             type: "POST",

@@ -1,4 +1,10 @@
 const db = require('../db/db_query');
+// Set today and tomorrow
+const today = new Date();
+const tomorrow = new Date();
+tomorrow.setDate(today.getDate() + 1);
+const sDate = today.getFullYear() + "-" + (today.getMonth()+1 < 10 ? "0"+today.getMonth() : today.getMonth()) + "-" + (today.getDate()+1 < 10 ? "0"+today.getDate() : today.getDate());
+const eDate = tomorrow.getFullYear() + "-" + (tomorrow.getMonth()+1 < 10 ? "0"+tomorrow.getMonth() : tomorrow.getMonth()) + "-" + (tomorrow.getDate()+1 < 10 ? "0"+tomorrow.getDate() : tomorrow.getDate());
 
 module.exports = {
 
@@ -26,6 +32,8 @@ module.exports = {
     getUserDetectionBySensor: async function(sensorsId) {
         try {
             const selectQ = 'select user_detection_id, time from user_detection where sensors_id='+sensorsId+';';
+            // 하루 단위
+            // const selectQ = 'select user_detection_id, time from user_detection where sensors_id='+sensorsId+' and time between date("'+sDate+'") and date("'+eDate+'");';
             return await db.asyncSelect(selectQ);
         } catch (err) {
             return err;
@@ -40,7 +48,9 @@ module.exports = {
             if (sensorSelectResult.result) {
                 const sensors = sensorSelectResult.message[0].sensors;
                 const detectionSelectQ = 'select a.sensors_id, a.name, group_concat(b.user_detection_id) as userDetectionList, group_concat(b.time) as times ' +
-                    'from sensors as a inner join user_detection as b on a.sensors_id=b.sensors_id where a.sensors_id in ('+sensors+') group by a.sensors_id;';
+                    'from sensors as a left join user_detection as b on a.sensors_id=b.sensors_id where a.sensors_id in ('+sensors+') group by a.sensors_id;';
+                // 하루 단위
+                // const detectionSelectQ = 'select a.sensors_id, a.name, group_concat(b.user_detection_id) as userDetectionList, group_concat(b.time) as times from sensors as a inner join user_detection as b on a.sensors_id=b.sensors_id where a.sensors_id in ('+sensors+') and b.time between date("'+sDate+'") and date("'+eDate+'") group by a.sensors_id;';
                 return await db.asyncSelect(detectionSelectQ);
             } else {
                 return {result: false, message: []};
@@ -54,6 +64,8 @@ module.exports = {
     getObjectPickupBySensor: async function(sensorsId) {
         try {
             const selectQ = 'select object_pickup_id, time from object_pickup where sensors_id='+sensorsId+';';
+            // 하루 단위
+            // const selectQ = 'select object_pickup_id, time from object_pickup where sensors_id='+sensorsId+' and time between date("'+sDate+'") and date("'+eDate+'");';
             return await db.asyncSelect(selectQ);
         } catch (err) {
             return err;
@@ -68,6 +80,8 @@ module.exports = {
             if (sensorSelectResult.result) {
                 const sensors = sensorSelectResult.message[0].sensors;
                 const detectionSelectQ = 'select a.sensors_id, a.name, group_concat(b.object_pickup_id) as objectPickupList, group_concat(b.time) as times from sensors as a left join object_pickup as b on a.sensors_id=b.sensors_id where a.sensors_id in ('+sensors+') group by a.sensors_id;';
+                // 하루 단위
+                // const detectionSelectQ = 'select a.sensors_id, a.name, group_concat(b.object_pickup_id) as objectPickupList, group_concat(b.time) as times from sensors as a left join object_pickup as b on a.sensors_id=b.sensors_id where a.sensors_id in ('+sensors+') and b.time between date("'+sDate+'") and date("'+eDate+'") group by a.sensors_id;';
                 return await db.asyncSelect(detectionSelectQ);
             } else {
                 return {result: false, message: []};
@@ -80,8 +94,9 @@ module.exports = {
     /* 센서의 STAY TIME */
     getStayEventBySensor: async function(sensorId) {
         try {
-            const selectStayTimeQ = 'select a.name, group_concat(b.time) as times, group_concat(c.duration) as stayTime from sensors as a ' +
-                'left join user_detection as b on a.sensors_id=b.sensors_id left join user_detection_duration as c on b.user_detection_id=c.user_detection_id where a.sensors_id='+sensorId+' group by a.sensors_id;';
+            const selectStayTimeQ = 'select a.name, group_concat(b.time) as times, group_concat(c.duration) as stayTime from sensors as a left join user_detection as b on a.sensors_id=b.sensors_id left join user_detection_duration as c on b.user_detection_id=c.user_detection_id where a.sensors_id='+sensorId+' group by a.sensors_id;';
+            // 하루 단위
+            // const selectStayTimeQ = 'select a.name, group_concat(b.time) as times, group_concat(c.duration) as stayTime from sensors as a left join user_detection as b on a.sensors_id=b.sensors_id left join user_detection_duration as c on b.user_detection_id=c.user_detection_id where a.sensors_id='+sensorId+' and b.time between date("'+sDate+'") and date("'+eDate+'") group by a.sensors_id;';
             return await db.asyncSelect(selectStayTimeQ);
         } catch (err) {
             return err;
@@ -92,6 +107,8 @@ module.exports = {
     getDisplayPopupByDevice: async function(deviceId) {
         try {
             const selectQ = 'select * from advertisement where device_id='+deviceId+';';
+            // 하루 단위
+            // const selectQ = 'select * from advertisement where device_id='+deviceId+' and time between date("'+sDate+'") and date("'+eDate+'");';
             return await db.asyncSelect(selectQ);
         } catch (err) {
             return err;
@@ -101,7 +118,7 @@ module.exports = {
     /* 현재 선택한 단말의 팝업 내역 */
     getPopupSettingList: async function(deviceId) {
         try {
-            const selectQ = 'select * from advertisement_setting where device_id='+deviceId+';';
+            const selectQ = 'select a.*, b.sensors_id, b.name as sensorName from advertisement_setting as a inner join sensors as b on a.sensors_id=b.sensors_id where a.device_id='+deviceId+' order by b.name ASC;';
             return await db.asyncQuery(selectQ);
         } catch (err) {
             return err;
@@ -111,8 +128,8 @@ module.exports = {
     /* 현재 선택한 단말에 대해 팝업 추가 */
     addPopupSetting: async function(deviceId, option) {
         try {
-            const insertQ = 'insert into advertisement_setting (device_id, type, advertisement_setting.key, url, x_axis, y_axis, width, height, duration, visible) value ' +
-                '('+deviceId+', "'+option.type+'", "'+option.name+'", "'+option.url+'", '+option.pos_x+', '+option.pos_y+', '+option.width+', '+option.height+', '+option.duration+', 1)';
+            const insertQ = 'insert into advertisement_setting (device_id, sensors_id, type, advertisement_setting.key, url, x_axis, y_axis, width, height, duration, visible) value ' +
+                '('+deviceId+', '+option.sensorsId+', "'+option.type+'", "'+option.name+'", "'+option.url+'", '+option.pos_x+', '+option.pos_y+', '+option.width+', '+option.height+', '+option.duration+', 1)';
             return await db.query(insertQ);
         } catch (err) {
             return err;
@@ -133,7 +150,7 @@ module.exports = {
                 }
             }
 
-            const updateQ = 'update advertisement_setting set type="'+option.type+'", advertisement_setting.key="'+option.name+'", url="'+option.url+'", x_axis='+option.pos_x+', y_axis='+option.pos_y+', ' +
+            const updateQ = 'update advertisement_setting set sensors_id='+option.sensorsId+', type="'+option.type+'", advertisement_setting.key="'+option.name+'", url="'+option.url+'", x_axis='+option.pos_x+', y_axis='+option.pos_y+', ' +
                 'width='+option.width+', height='+option.height+', duration='+option.duration+', visible=1 where advertisement_setting_id='+option.id+';';
             return await db.query(updateQ);
         } catch (err) {
