@@ -186,15 +186,25 @@ router.get('/setting/popup/list', async function(req, res) {
 /* ADD POPUP SETTING */
 router.post('/setting/popup/add', async function(req, res) {
     const option = JSON.parse(req.body.option);
-    const result = await query.addPopupSetting(deviceList[CUR_POS].id, option);
-    await res.json(result);
+    const deviceId = deviceList[CUR_POS].id;
+    const result = await query.addPopupSetting(deviceId, option);
+    if (result.result) {
+        await res.json({result: true, id: deviceId});
+    } else {
+        await res.json(result);
+    }
 });
 
 /* UPDATE POPUP SETTING */
 router.post('/setting/popup/update', async function(req, res) {
     const option = JSON.parse(req.body.option);
-    const result = await query.updatePopupSetting(deviceList[CUR_POS].id, option);
-    await res.json(result);
+    const deviceId = deviceList[CUR_POS].id;
+    const result = await query.updatePopupSetting(deviceId, option);
+    if (result.result) {
+        await res.json({result: true, id: deviceId});
+    } else {
+        await res.json(result);
+    }
 });
 
 /* DELETE POPUP SETTING */
